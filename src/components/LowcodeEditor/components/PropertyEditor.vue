@@ -1,0 +1,335 @@
+<template>
+  <div class="property-editor">
+    <a-tabs v-model:activeKey="activeTabKey">
+      <a-tab-pane key="basic" tab="基本属性">
+        <a-form layout="vertical">
+          <a-form-item label="ID">
+            <a-input :value="component.id" disabled />
+          </a-form-item>
+
+          <a-collapse v-model:activeKey="basicActiveKeys">
+            <a-collapse-panel key="style" header="样式设置">
+              <a-form-item label="宽度">
+                <a-input-number
+                  v-model:value="styleForm.width"
+                  :min="0"
+                  :max="2000"
+                  :addonAfter="styleForm.widthUnit"
+                  style="width: 150px"
+                  @change="updateStyle('width', `${styleForm.width}${styleForm.widthUnit}`)"
+                />
+                <a-select
+                  v-model:value="styleForm.widthUnit"
+                  style="width: 70px; margin-left: 8px"
+                  @change="updateStyle('width', `${styleForm.width}${styleForm.widthUnit}`)"
+                >
+                  <a-select-option value="px">px</a-select-option>
+                  <a-select-option value="%">%</a-select-option>
+                </a-select>
+              </a-form-item>
+
+              <a-form-item label="高度">
+                <a-input-number
+                  v-model:value="styleForm.height"
+                  :min="0"
+                  :max="2000"
+                  :addonAfter="styleForm.heightUnit"
+                  style="width: 150px"
+                  @change="updateStyle('height', `${styleForm.height}${styleForm.heightUnit}`)"
+                />
+                <a-select
+                  v-model:value="styleForm.heightUnit"
+                  style="width: 70px; margin-left: 8px"
+                  @change="updateStyle('height', `${styleForm.height}${styleForm.heightUnit}`)"
+                >
+                  <a-select-option value="px">px</a-select-option>
+                  <a-select-option value="%">%</a-select-option>
+                </a-select>
+              </a-form-item>
+
+              <a-form-item label="背景颜色">
+                <a-input
+                  v-model:value="styleForm.backgroundColor"
+                  @change="updateStyle('backgroundColor', styleForm.backgroundColor)"
+                >
+                  <template #prefix>
+                    <div
+                      class="color-block"
+                      :style="{ backgroundColor: styleForm.backgroundColor || '#ffffff' }"
+                    ></div>
+                  </template>
+                </a-input>
+              </a-form-item>
+
+              <a-form-item label="边框">
+                <a-input
+                  v-model:value="styleForm.border"
+                  placeholder="1px solid #ddd"
+                  @change="updateStyle('border', styleForm.border)"
+                />
+              </a-form-item>
+
+              <a-form-item label="边框圆角">
+                <a-input-number
+                  v-model:value="styleForm.borderRadius"
+                  :min="0"
+                  :max="50"
+                  :addonAfter="'px'"
+                  style="width: 150px"
+                  @change="updateStyle('borderRadius', `${styleForm.borderRadius}px`)"
+                />
+              </a-form-item>
+            </a-collapse-panel>
+
+            <a-collapse-panel key="position" header="位置设置">
+              <a-form-item label="X坐标">
+                <a-input-number
+                  v-model:value="styleForm.left"
+                  :min="0"
+                  :addonAfter="'px'"
+                  style="width: 150px"
+                  @change="updateStyle('left', `${styleForm.left}px`)"
+                />
+              </a-form-item>
+
+              <a-form-item label="Y坐标">
+                <a-input-number
+                  v-model:value="styleForm.top"
+                  :min="0"
+                  :addonAfter="'px'"
+                  style="width: 150px"
+                  @change="updateStyle('top', `${styleForm.top}px`)"
+                />
+              </a-form-item>
+
+              <a-form-item label="层级">
+                <a-input-number
+                  v-model:value="styleForm.zIndex"
+                  :min="0"
+                  :max="1000"
+                  style="width: 150px"
+                  @change="updateStyle('zIndex', styleForm.zIndex)"
+                />
+              </a-form-item>
+            </a-collapse-panel>
+          </a-collapse>
+        </a-form>
+      </a-tab-pane>
+
+      <a-tab-pane key="props" tab="组件属性">
+        <component-property-form :component="component" @update="handleUpdateProps" />
+      </a-tab-pane>
+
+      <a-tab-pane key="data" tab="数据绑定">
+        <a-form layout="vertical">
+          <a-form-item label="数据源类型">
+            <a-radio-group v-model:value="dataForm.type">
+              <a-radio value="static">静态数据</a-radio>
+              <a-radio value="api">API数据</a-radio>
+            </a-radio-group>
+          </a-form-item>
+
+          <template v-if="dataForm.type === 'api'">
+            <a-form-item label="API地址">
+              <a-input
+                v-model:value="dataForm.url"
+                placeholder="https://api.example.com/data"
+                @change="updateDataSource('url', dataForm.url)"
+              />
+            </a-form-item>
+
+            <a-form-item label="请求方法">
+              <a-select
+                v-model:value="dataForm.method"
+                style="width: 100%"
+                @change="updateDataSource('method', dataForm.method)"
+              >
+                <a-select-option value="GET">GET</a-select-option>
+                <a-select-option value="POST">POST</a-select-option>
+                <a-select-option value="PUT">PUT</a-select-option>
+                <a-select-option value="DELETE">DELETE</a-select-option>
+              </a-select>
+            </a-form-item>
+
+            <a-form-item label="刷新间隔(秒)">
+              <a-input-number
+                v-model:value="dataForm.refreshInterval"
+                :min="0"
+                style="width: 100%"
+                @change="updateDataSource('refreshInterval', dataForm.refreshInterval)"
+              />
+              <span class="form-help">0表示不自动刷新</span>
+            </a-form-item>
+          </template>
+
+          <template v-else>
+            <a-form-item label="静态数据">
+              <a-textarea
+                v-model:value="staticDataJson"
+                :rows="6"
+                placeholder="输入JSON格式的静态数据"
+                @blur="handleStaticDataUpdate"
+              />
+            </a-form-item>
+          </template>
+        </a-form>
+      </a-tab-pane>
+    </a-tabs>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, reactive, computed, watch } from 'vue'
+import type { Component } from '@/types/lowcode'
+import ComponentPropertyForm from './ComponentPropertyForm.vue'
+
+const props = defineProps<{
+  component: Component
+}>()
+
+const emit = defineEmits<{
+  (e: 'update', component: Component): void
+}>()
+
+const activeTabKey = ref('basic')
+const basicActiveKeys = ref(['style', 'position'])
+
+// 解析样式数据
+const parseStyleValue = (
+  value: string | undefined,
+  unit: string,
+): { value: number; unit: string } => {
+  if (!value) return { value: 0, unit }
+
+  const match = value.toString().match(/^(\d+)(.*)$/)
+  if (match) {
+    return {
+      value: parseInt(match[1]),
+      unit: match[2] || unit,
+    }
+  }
+
+  return { value: 0, unit }
+}
+
+// 样式表单数据
+const styleForm = reactive({
+  width: 0,
+  widthUnit: 'px',
+  height: 0,
+  heightUnit: 'px',
+  backgroundColor: '',
+  border: '',
+  borderRadius: 0,
+  left: 0,
+  top: 0,
+  zIndex: 0,
+})
+
+// 数据源表单
+const dataForm = reactive({
+  type: 'static',
+  url: '',
+  method: 'GET',
+  refreshInterval: 0,
+})
+
+// 静态数据JSON字符串
+const staticDataJson = ref('')
+
+// 初始化样式表单数据
+watch(
+  () => props.component,
+  (newVal) => {
+    if (newVal) {
+      // 解析宽度
+      const widthResult = parseStyleValue(newVal.style.width, 'px')
+      styleForm.width = widthResult.value
+      styleForm.widthUnit = widthResult.unit
+
+      // 解析高度
+      const heightResult = parseStyleValue(newVal.style.height, 'px')
+      styleForm.height = heightResult.value
+      styleForm.heightUnit = heightResult.unit
+
+      // 解析其他样式
+      styleForm.backgroundColor = newVal.style.backgroundColor || ''
+      styleForm.border = newVal.style.border || ''
+      styleForm.borderRadius = parseInt(String(newVal.style.borderRadius || '0'))
+      styleForm.left = parseInt(String(newVal.style.left || '0'))
+      styleForm.top = parseInt(String(newVal.style.top || '0'))
+      styleForm.zIndex = newVal.style.zIndex || 0
+
+      // 数据源
+      dataForm.type = newVal.dataSource.type
+      dataForm.url = newVal.dataSource.url
+      dataForm.method = newVal.dataSource.method
+      dataForm.refreshInterval = newVal.dataSource.refreshInterval
+
+      // 静态数据
+      try {
+        staticDataJson.value = newVal.dataSource.data
+          ? JSON.stringify(newVal.dataSource.data, null, 2)
+          : ''
+      } catch (e) {
+        staticDataJson.value = ''
+      }
+    }
+  },
+  { immediate: true, deep: true },
+)
+
+// 更新组件样式
+const updateStyle = (key: string, value: any) => {
+  const updatedComponent = JSON.parse(JSON.stringify(props.component))
+  updatedComponent.style[key] = value
+  emit('update', updatedComponent)
+}
+
+// 更新组件属性
+const handleUpdateProps = (newProps: Record<string, any>) => {
+  const updatedComponent = JSON.parse(JSON.stringify(props.component))
+  updatedComponent.props = newProps
+  emit('update', updatedComponent)
+}
+
+// 更新数据源属性
+const updateDataSource = (key: string, value: any) => {
+  const updatedComponent = JSON.parse(JSON.stringify(props.component))
+  updatedComponent.dataSource[key] = value
+  emit('update', updatedComponent)
+}
+
+// 处理静态数据更新
+const handleStaticDataUpdate = () => {
+  try {
+    const data = staticDataJson.value ? JSON.parse(staticDataJson.value) : null
+    const updatedComponent = JSON.parse(JSON.stringify(props.component))
+    updatedComponent.dataSource.data = data
+    emit('update', updatedComponent)
+  } catch (e) {
+    // 解析错误处理
+    console.error('JSON解析错误:', e)
+  }
+}
+</script>
+
+<style scoped>
+.property-editor {
+  height: 100%;
+  overflow-y: auto;
+}
+
+.color-block {
+  width: 16px;
+  height: 16px;
+  display: inline-block;
+  margin-right: 6px;
+  border: 1px solid #ddd;
+}
+
+.form-help {
+  font-size: 12px;
+  color: #aaa;
+}
+</style>

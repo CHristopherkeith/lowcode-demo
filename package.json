@@ -13,9 +13,17 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
+    "@types/uuid": "^10.0.0",
+    "ant-design-vue": "^4.2.6",
+    "echarts": "^5.6.0",
     "pinia": "^3.0.1",
+    "sortablejs": "^1.15.6",
+    "uuid": "^11.1.0",
     "vue": "^3.5.13",
-    "vue-router": "^4.5.0"
+    "vue-draggable-next": "^2.2.1",
+    "vue-echarts": "^7.0.3",
+    "vue-router": "^4.5.0",
+    "vuedraggable": "^2.24.3"
   },
   "devDependencies": {
     "@tsconfig/node22": "^22.0.1",
