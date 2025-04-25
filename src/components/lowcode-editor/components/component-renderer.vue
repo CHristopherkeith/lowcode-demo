@@ -236,28 +236,32 @@ const componentProps = computed(() => {
   return result
 })
 
-// 有效的 CSS position 类型
-type CSSPositionType = 'static' | 'relative' | 'absolute' | 'fixed' | 'sticky'
-
-// 组件容器样式 - 转换为 CSSProperties 类型
+// 组件容器样式计算
 const wrapperStylesObj = computed<CSSProperties>(() => {
+  // 基础样式
   const baseStyle: CSSProperties = {
     cursor: props.isEditor ? 'move' : 'auto',
   }
 
-  // 添加其他样式属性
-  if (props.config.style.position) {
-    baseStyle.position = props.config.style.position as CSSPositionType
-  }
-  if (props.config.style.left) baseStyle.left = props.config.style.left as string
-  if (props.config.style.top) baseStyle.top = props.config.style.top as string
-  if (props.config.style.width) baseStyle.width = props.config.style.width
-  if (props.config.style.height) baseStyle.height = props.config.style.height
-  if (props.config.style.zIndex) baseStyle.zIndex = props.config.style.zIndex as string
-  if (props.config.style.backgroundColor)
-    baseStyle.backgroundColor = props.config.style.backgroundColor
-  if (props.config.style.border) baseStyle.border = props.config.style.border
-  if (props.config.style.borderRadius) baseStyle.borderRadius = props.config.style.borderRadius
+  // 从配置中获取样式并合并
+  const { style } = props.config
+  if (!style) return baseStyle
+
+  // 使用对象解构和动态属性赋值简化代码
+  const styleProps = [
+    'position',
+    'width',
+    'height',
+    'backgroundColor',
+    'border',
+    'borderRadius',
+    'zIndex',
+  ]
+
+  // 遍历所有样式属性并添加到baseStyle
+  styleProps.forEach((prop) => {
+    if (style[prop]) baseStyle[prop] = style[prop]
+  })
 
   return baseStyle
 })

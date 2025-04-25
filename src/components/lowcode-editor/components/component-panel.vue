@@ -5,7 +5,7 @@
       v-model:activeKey="activeCollapseKeys"
       :defaultActiveKey="['container', 'basic', 'advanced']"
     >
-      <a-collapse-panel key="container" header="容器组件">
+      <!-- <a-collapse-panel key="container" header="容器组件">
         <a-space direction="vertical" style="width: 100%">
           <VueDraggable
             v-model="containerComponentsData"
@@ -29,7 +29,7 @@
             </a-card>
           </VueDraggable>
         </a-space>
-      </a-collapse-panel>
+      </a-collapse-panel> -->
 
       <a-collapse-panel key="basic" header="基础表单组件">
         <a-space direction="vertical" style="width: 100%">
