@@ -62,7 +62,11 @@
 <script setup lang="ts">
 import { reactive, computed, watch } from 'vue'
 import type { Component, PropConfig } from '@/types/lowcode.d'
-import { basicComponents, advancedComponents } from '../config/component-config'
+import {
+  basicComponents,
+  advancedComponents,
+  containerComponents,
+} from '../config/component-config'
 
 const props = defineProps<{
   component: Component
@@ -77,7 +81,7 @@ const propValues = reactive<Record<string, unknown>>({})
 
 // 获取组件的属性配置
 const propConfigs = computed<PropConfig[]>(() => {
-  const allComponents = [...basicComponents, ...advancedComponents]
+  const allComponents = [...containerComponents, ...basicComponents, ...advancedComponents]
   const componentConfig = allComponents.find((item) => item.type === props.component.type)
   return componentConfig?.propConfig || []
 })

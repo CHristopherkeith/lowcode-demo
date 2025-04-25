@@ -14,49 +14,28 @@
       <div class="lowcode-editor__render-panel">
         <VueDraggable
           v-model="pageConfig.components"
-          group="components"
+          :group="{ name: 'components', put: validateMainDrop }"
           :sort="true"
           item-key="id"
           tag="div"
           class="lowcode-editor__droppable-area"
           @add="handleComponentAdded"
         >
-          <!-- <template #item="{ element: component }"> -->
           <div
             v-for="component in pageConfig.components"
             :key="component.id"
             class="lowcode-editor__component-container"
-            @click.stop="handleSelectComponent(component)"
           >
-            <div
-              :class="[
-                'lowcode-editor__component-wrapper',
-                {
-                  'lowcode-editor__component-wrapper--selected':
-                    component.id === selectedComponentId,
-                },
-              ]"
-            >
-              <component :is="resolveComponent(component.type)" v-bind="component.props" />
-              <div
-                v-if="component.id === selectedComponentId"
-                class="lowcode-editor__component-actions"
-              >
-                <a-button
-                  type="text"
-                  size="small"
-                  danger
-                  @click.stop="handleDeleteComponent(component.id)"
-                >
-                  删除
-                </a-button>
-              </div>
-            </div>
+            <component-renderer
+              :config="component"
+              :is-editor="true"
+              @select="handleSelectComponent"
+              @delete="handleDeleteComponent"
+            />
           </div>
-          <!-- </template> -->
           <template #header>
             <div v-if="pageConfig.components.length === 0" class="lowcode-editor__empty-tip">
-              拖拽组件到此区域
+              拖拽组件到此区域（栅格列只能放在栅格行中）
             </div>
           </template>
         </VueDraggable>
@@ -80,19 +59,37 @@ import { v4 as uuidv4 } from 'uuid'
 import { VueDraggable } from 'vue-draggable-plus'
 import PropertyEditor from './components/property-editor.vue'
 import ComponentPanel from './components/component-panel.vue'
+import ComponentRenderer from './components/component-renderer.vue'
 import type { PageConfig, Component } from '@/types/lowcode.d'
-import { Input, Select, DatePicker, Radio, Checkbox, Button, Form, Table } from 'ant-design-vue'
+import { Row, Col } from 'ant-design-vue'
 import { useComponentStore } from '@/stores/component'
-import { basicComponents, advancedComponents } from './config/component-config'
+import { basicComponents, advancedComponents, containerComponents } from './config/component-config'
 
 const router = useRouter()
 const componentStore = useComponentStore()
 const selectedComponentId = computed(() => componentStore.selectedComponentId)
 const selectedComponent = computed(() => {
   if (!selectedComponentId.value) return null
-  return (
-    pageConfig.components.find((item: Component) => item.id === selectedComponentId.value) || null
-  )
+
+  // 递归搜索选中的组件
+  const findComponentById = (components: Component[], id: string): Component | null => {
+    for (const component of components) {
+      if (component.id === id) {
+        return component
+      }
+
+      if (component.children && component.children.length > 0) {
+        const found = findComponentById(component.children, id)
+        if (found) {
+          return found
+        }
+      }
+    }
+
+    return null
+  }
+
+  return findComponentById(pageConfig.components, selectedComponentId.value)
 })
 
 // 页面配置
@@ -106,21 +103,12 @@ const pageConfig = reactive<PageConfig>({
   components: [],
 })
 
-// 解析组件类型为对应的组件
-const resolveComponent = (type: string) => {
-  const componentMap: Record<string, unknown> = {
-    input: Input,
-    select: Select,
-    datePicker: DatePicker,
-    radio: Radio.Group,
-    checkbox: Checkbox.Group,
-    button: Button,
-    form: Form,
-    table: Table,
-    chart: 'div', // 图表组件需要特殊处理
-  }
-
-  return componentMap[type] || 'div'
+// 验证函数：不允许将Col直接拖到顶层
+const validateMainDrop = (to: unknown, from: unknown, dragEl: HTMLElement, event: unknown) => {
+  // 获取被拖拽元素的组件类型
+  const draggedType = dragEl.getAttribute('data-type')
+  // 不允许col类型组件直接拖到顶层，col只能作为row的子组件
+  return draggedType !== 'col'
 }
 
 // 处理新组件添加
@@ -133,7 +121,7 @@ const handleComponentAdded = (event: { newIndex: number; item: HTMLElement }) =>
   // 这里处理新拖入的组件，添加必要的属性
   if (!component.id) {
     // 如果是从组件面板拖入的新组件，添加ID和样式属性
-    const allComponents = [...basicComponents, ...advancedComponents]
+    const allComponents = [...containerComponents, ...basicComponents, ...advancedComponents]
     const componentConfig = allComponents.find((item) => item.type === component.type)
 
     if (componentConfig) {
@@ -160,6 +148,35 @@ const handleComponentAdded = (event: { newIndex: number; item: HTMLElement }) =>
       // 替换掉原始拖入的组件
       pageConfig.components.splice(newIndex, 1, newComponent)
       componentStore.setSelectedComponentId(newComponent.id)
+
+      // 对于行容器，默认添加两个列
+      if (component.type === 'row') {
+        // 获取列组件配置
+        const colConfig = containerComponents.find((item) => item.type === 'col')
+        if (colConfig) {
+          for (let i = 0; i < 2; i++) {
+            const colComponent: Component = {
+              id: uuidv4(),
+              type: 'col',
+              props: {
+                ...colConfig.defaultProps,
+                span: 12, // 两列各占50%
+              },
+              style: {},
+              dataSource: {
+                type: 'static',
+                data: null,
+                url: '',
+                method: 'GET',
+                params: {},
+                refreshInterval: 0,
+              },
+              children: [],
+            }
+            newComponent.children.push(colComponent)
+          }
+        }
+      }
     }
   }
 }
@@ -171,21 +188,51 @@ const handleSelectComponent = (component: Component) => {
 
 // 删除组件
 const handleDeleteComponent = (componentId: string) => {
-  const index = pageConfig.components.findIndex((item: Component) => item.id === componentId)
-  if (index !== -1) {
-    pageConfig.components.splice(index, 1)
-    componentStore.setSelectedComponentId(null)
+  const deleteComponentById = (components: Component[], id: string): boolean => {
+    const index = components.findIndex((item) => item.id === id)
+    if (index !== -1) {
+      components.splice(index, 1)
+      return true
+    }
+
+    // 递归处理子组件
+    for (const component of components) {
+      if (component.children && component.children.length > 0) {
+        if (deleteComponentById(component.children, id)) {
+          return true
+        }
+      }
+    }
+
+    return false
   }
+
+  deleteComponentById(pageConfig.components, componentId)
+  componentStore.setSelectedComponentId(null)
 }
 
 // 更新组件
 const handleUpdateComponent = (updatedComponent: Component) => {
-  const index = pageConfig.components.findIndex(
-    (item: Component) => item.id === updatedComponent.id,
-  )
-  if (index !== -1) {
-    pageConfig.components[index] = updatedComponent
+  const updateComponentById = (components: Component[], component: Component): boolean => {
+    const index = components.findIndex((item) => item.id === component.id)
+    if (index !== -1) {
+      components[index] = component
+      return true
+    }
+
+    // 递归处理子组件
+    for (const item of components) {
+      if (item.children && item.children.length > 0) {
+        if (updateComponentById(item.children, component)) {
+          return true
+        }
+      }
+    }
+
+    return false
   }
+
+  updateComponentById(pageConfig.components, updatedComponent)
 }
 
 // 保存配置

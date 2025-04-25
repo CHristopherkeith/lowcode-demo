@@ -1,5 +1,87 @@
 import type { ComponentDefinition } from '@/types/lowcode.d'
 
+// 容器组件
+export const containerComponents: ComponentDefinition[] = [
+  {
+    type: 'row',
+    name: '栅格行容器',
+    icon: 'layout',
+    defaultProps: {
+      gutter: 16,
+      justify: 'start',
+      align: 'top',
+      wrap: true,
+    },
+    propConfig: [
+      {
+        name: 'gutter',
+        label: '列间距',
+        type: 'number',
+        defaultValue: 16,
+      },
+      {
+        name: 'justify',
+        label: '水平排列方式',
+        type: 'select',
+        defaultValue: 'start',
+        options: [
+          { label: '左对齐', value: 'start' },
+          { label: '居中对齐', value: 'center' },
+          { label: '右对齐', value: 'end' },
+          { label: '两端对齐', value: 'space-between' },
+          { label: '分散对齐', value: 'space-around' },
+        ],
+      },
+      {
+        name: 'align',
+        label: '垂直对齐方式',
+        type: 'select',
+        defaultValue: 'top',
+        options: [
+          { label: '顶部对齐', value: 'top' },
+          { label: '居中对齐', value: 'middle' },
+          { label: '底部对齐', value: 'bottom' },
+        ],
+      },
+      {
+        name: 'wrap',
+        label: '自动换行',
+        type: 'boolean',
+        defaultValue: true,
+      },
+    ],
+  },
+  {
+    type: 'col',
+    name: '栅格列容器',
+    icon: 'column-width',
+    defaultProps: {
+      span: 12,
+      offset: 0,
+    },
+    propConfig: [
+      {
+        name: 'span',
+        label: '列宽',
+        type: 'number',
+        defaultValue: 12,
+      },
+      {
+        name: 'offset',
+        label: '列偏移',
+        type: 'number',
+        defaultValue: 0,
+      },
+      {
+        name: 'flex',
+        label: '弹性布局',
+        type: 'string',
+        defaultValue: '',
+      },
+    ],
+  },
+]
+
 // 基础表单组件
 export const basicComponents: ComponentDefinition[] = [
   {
