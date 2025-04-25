@@ -1,47 +1,25 @@
 <template>
   <div class="lowcode-editor">
-    <div class="editor-header">
+    <div class="lowcode-editor__header">
       <a-space>
         <a-button type="primary" @click="handleSave">保存</a-button>
         <a-button @click="handlePreview">预览</a-button>
         <a-button danger @click="handleClear">清空</a-button>
       </a-space>
     </div>
-    <div class="editor-content">
-      <div class="material-panel">
-        <h3>组件物料</h3>
-        <a-collapse v-model:activeKey="activeKeys">
-          <a-collapse-panel key="1" header="基础表单组件">
-            <div
-              v-for="component in basicComponents"
-              :key="component.type"
-              class="component-item"
-              draggable="true"
-              @dragstart="onDragStart($event, component)"
-            >
-              {{ component.name }}
-            </div>
-          </a-collapse-panel>
-          <a-collapse-panel key="2" header="高级组件">
-            <div
-              v-for="component in advancedComponents"
-              :key="component.type"
-              class="component-item"
-              draggable="true"
-              @dragstart="onDragStart($event, component)"
-            >
-              {{ component.name }}
-            </div>
-          </a-collapse-panel>
-        </a-collapse>
+    <div class="lowcode-editor__content">
+      <div class="lowcode-editor__material-panel">
+        <component-panel />
       </div>
-      <div class="render-panel" @dragover.prevent @drop="onDrop">
-        <div v-if="pageConfig.components.length === 0" class="empty-tip">拖拽组件到此区域</div>
+      <div class="lowcode-editor__render-panel" @dragover.prevent @drop="onDrop">
+        <div v-if="pageConfig.components.length === 0" class="lowcode-editor__empty-tip">
+          拖拽组件到此区域
+        </div>
         <template v-else>
           <div
             v-for="component in pageConfig.components"
             :key="component.id"
-            class="component-container"
+            class="lowcode-editor__component-container"
             :style="{
               position: 'absolute',
               left: component.style.left,
@@ -50,9 +28,20 @@
             }"
             @click.stop="handleSelectComponent(component)"
           >
-            <div :class="['component-wrapper', { selected: component.id === selectedComponentId }]">
+            <div
+              :class="[
+                'lowcode-editor__component-wrapper',
+                {
+                  'lowcode-editor__component-wrapper--selected':
+                    component.id === selectedComponentId,
+                },
+              ]"
+            >
               <component :is="resolveComponent(component.type)" v-bind="component.props" />
-              <div v-if="component.id === selectedComponentId" class="component-actions">
+              <div
+                v-if="component.id === selectedComponentId"
+                class="lowcode-editor__component-actions"
+              >
                 <a-button
                   type="text"
                   size="small"
@@ -66,9 +55,11 @@
           </div>
         </template>
       </div>
-      <div class="property-panel">
+      <div class="lowcode-editor__property-panel">
         <h3>属性设置</h3>
-        <div v-if="!selectedComponent" class="empty-tip">请选择一个组件进行配置</div>
+        <div v-if="!selectedComponent" class="lowcode-editor__empty-tip">
+          请选择一个组件进行配置
+        </div>
         <property-editor v-else :component="selectedComponent" @update="handleUpdateComponent" />
       </div>
     </div>
@@ -76,18 +67,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { v4 as uuidv4 } from 'uuid'
 import PropertyEditor from './components/property-editor.vue'
-import { basicComponents, advancedComponents } from './config/component-config'
-import type { PageConfig, Component, ComponentDefinition } from '@/types/lowcode'
+import ComponentPanel from './components/ComponentPanel.vue'
+import type { PageConfig, Component } from '@/types/lowcode.d'
 import { Input, Select, DatePicker, Radio, Checkbox, Button, Form, Table } from 'ant-design-vue'
 import { useComponentStore } from '@/stores/component'
+import { basicComponents, advancedComponents } from './config/component-config'
 
 const router = useRouter()
-const activeKeys = ref(['1', '2'])
 const componentStore = useComponentStore()
 const selectedComponentId = computed(() => componentStore.selectedComponentId)
 const selectedComponent = computed(() => {
@@ -125,28 +116,35 @@ const resolveComponent = (type: string) => {
   return componentMap[type] || 'div'
 }
 
-// 拖拽开始
-const onDragStart = (event: DragEvent, component: ComponentDefinition) => {
-  if (event.dataTransfer) {
-    event.dataTransfer.setData('componentType', component.type)
-  }
-}
-
 // 拖拽放置
-const onDrop = (event: DragEvent) => {
-  const componentType = event.dataTransfer?.getData('componentType')
-  if (!componentType) return
+const onDrop = (event: DragEvent | string) => {
+  let componentType = ''
 
-  // 计算放置位置
-  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
-  const x = event.clientX - rect.left
-  const y = event.clientY - rect.top
+  if (typeof event === 'string') {
+    componentType = event
+  } else {
+    componentType = event.dataTransfer?.getData('componentType') || ''
+    if (!componentType) return
+
+    // 阻止默认行为
+    event.preventDefault()
+  }
 
   // 创建新组件
   const allComponents = [...basicComponents, ...advancedComponents]
   const componentConfig = allComponents.find((item) => item.type === componentType)
 
   if (componentConfig) {
+    // 计算放置位置，只有在拖放时才获取位置
+    let x = 100
+    let y = 100
+
+    if (typeof event !== 'string') {
+      const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
+      x = event.clientX - rect.left
+      y = event.clientY - rect.top
+    }
+
     const newComponent: Component = {
       id: uuidv4(),
       type: componentType,
@@ -219,86 +217,86 @@ const handleClear = () => {
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .lowcode-editor {
   height: 100%;
   display: flex;
   flex-direction: column;
-}
 
-.editor-header {
-  height: 50px;
-  padding: 0 16px;
-  display: flex;
-  align-items: center;
-  border-bottom: 1px solid #eee;
-}
+  &__header {
+    height: 50px;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #eee;
+  }
 
-.editor-content {
-  flex: 1;
-  display: flex;
-  overflow: hidden;
-}
+  &__content {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+  }
 
-.material-panel {
-  width: 250px;
-  padding: 16px;
-  border-right: 1px solid #eee;
-  overflow-y: auto;
-}
+  &__material-panel {
+    width: 250px;
+    padding: 16px;
+    border-right: 1px solid #eee;
+    overflow-y: auto;
+  }
 
-.render-panel {
-  flex: 1;
-  position: relative;
-  background-color: #f5f5f5;
-  overflow: auto;
-}
+  &__render-panel {
+    flex: 1;
+    position: relative;
+    background-color: #f5f5f5;
+    overflow: auto;
+  }
 
-.property-panel {
-  width: 300px;
-  padding: 16px;
-  border-left: 1px solid #eee;
-  overflow-y: auto;
-}
+  &__property-panel {
+    width: 300px;
+    padding: 16px;
+    border-left: 1px solid #eee;
+    overflow-y: auto;
+  }
 
-.component-item {
-  padding: 8px 12px;
-  margin-bottom: 8px;
-  border: 1px solid #eee;
-  background-color: #fff;
-  cursor: pointer;
-  user-select: none;
-}
+  &__component-item {
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    border: 1px solid #eee;
+    background-color: #fff;
+    cursor: pointer;
+    user-select: none;
+  }
 
-.component-container {
-  position: absolute;
-}
+  &__component-container {
+    position: absolute;
+  }
 
-.component-wrapper {
-  padding: 2px;
-  background-color: #fff;
-  min-width: 100px;
-  min-height: 30px;
-  border: 1px solid transparent;
-}
+  &__component-wrapper {
+    padding: 2px;
+    background-color: #fff;
+    min-width: 100px;
+    min-height: 30px;
+    border: 1px solid transparent;
 
-.component-wrapper.selected {
-  border: 1px solid #1890ff;
-}
+    &--selected {
+      border: 1px solid #1890ff;
+    }
+  }
 
-.component-actions {
-  position: absolute;
-  right: 0;
-  top: -30px;
-  background-color: #fff;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
+  &__component-actions {
+    position: absolute;
+    right: 0;
+    top: -30px;
+    background-color: #fff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  }
 
-.empty-tip {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  color: #999;
+  &__empty-tip {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #999;
+  }
 }
 </style>

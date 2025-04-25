@@ -1,11 +1,11 @@
 <template>
   <div
-    :class="['component-wrapper', { selected: isSelected }]"
+    :class="['component-renderer', { 'component-renderer--selected': isSelected }]"
     :style="wrapperStylesObj"
     @click.stop="handleClick"
   >
     <component :is="resolveComponent(config.type)" v-bind="componentProps" />
-    <div v-if="isEditor && isSelected" class="component-actions">
+    <div v-if="isEditor && isSelected" class="component-renderer__actions">
       <a-button type="text" size="small" danger @click.stop="handleDelete"> 删除 </a-button>
     </div>
   </div>
@@ -13,7 +13,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { Component } from '@/types/lowcode'
+import type { Component } from '@/types/lowcode.d'
 import { Input, Select, DatePicker, Radio, Checkbox, Button, Form, Table } from 'ant-design-vue'
 import { useComponentStore } from '@/stores/component'
 import type { CSSProperties } from 'vue'
@@ -102,23 +102,23 @@ const wrapperStylesObj = computed<CSSProperties>(() => {
 })
 </script>
 
-<style scoped>
-.component-wrapper {
+<style lang="scss" scoped>
+.component-renderer {
   position: relative;
   border: 1px solid transparent;
-}
 
-.component-wrapper.selected {
-  border: 1px dashed #1890ff;
-}
+  &--selected {
+    border: 1px dashed #1890ff;
+  }
 
-.component-actions {
-  position: absolute;
-  top: -30px;
-  right: 0;
-  background-color: #fff;
-  border: 1px solid #eee;
-  display: flex;
-  z-index: 100;
+  &__actions {
+    position: absolute;
+    top: -30px;
+    right: 0;
+    background-color: #fff;
+    border: 1px solid #eee;
+    display: flex;
+    z-index: 100;
+  }
 }
 </style>

@@ -1,4 +1,4 @@
-import type { ComponentDefinition } from '@/types/lowcode'
+import type { ComponentDefinition } from '@/types/lowcode.d'
 
 // 基础表单组件
 export const basicComponents: ComponentDefinition[] = [

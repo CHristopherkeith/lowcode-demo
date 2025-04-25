@@ -44,7 +44,7 @@
             <a-input v-model:value="propValues[config.name]" @change="handlePropChange">
               <template #prefix>
                 <div
-                  class="color-block"
+                  class="component-property-form__color-block"
                   :style="{ backgroundColor: String(propValues[config.name] || '#ffffff') }"
                 ></div>
               </template>
@@ -54,14 +54,14 @@
       </a-form>
     </template>
     <template v-else>
-      <div class="empty-tip">该组件没有可配置的属性</div>
+      <div class="component-property-form__empty-tip">该组件没有可配置的属性</div>
     </template>
   </div>
 </template>
 
 <script setup lang="ts">
 import { reactive, computed, watch } from 'vue'
-import type { Component, PropConfig } from '@/types/lowcode'
+import type { Component, PropConfig } from '@/types/lowcode.d'
 import { basicComponents, advancedComponents } from '../config/component-config'
 
 const props = defineProps<{
@@ -107,22 +107,22 @@ const handlePropChange = () => {
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .component-property-form {
   width: 100%;
-}
 
-.empty-tip {
-  color: #aaa;
-  text-align: center;
-  padding: 20px 0;
-}
+  &__empty-tip {
+    color: #aaa;
+    text-align: center;
+    padding: 20px 0;
+  }
 
-.color-block {
-  width: 16px;
-  height: 16px;
-  display: inline-block;
-  margin-right: 6px;
-  border: 1px solid #ddd;
+  &__color-block {
+    width: 16px;
+    height: 16px;
+    display: inline-block;
+    margin-right: 6px;
+    border: 1px solid #ddd;
+  }
 }
 </style>

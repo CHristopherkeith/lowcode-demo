@@ -54,7 +54,7 @@
                 >
                   <template #prefix>
                     <div
-                      class="color-block"
+                      class="property-editor__color-block"
                       :style="{ backgroundColor: styleForm.backgroundColor || '#ffffff' }"
                     ></div>
                   </template>
@@ -158,7 +158,7 @@
                 style="width: 100%"
                 @change="updateDataSource('refreshInterval', dataForm.refreshInterval)"
               />
-              <span class="form-help">0表示不自动刷新</span>
+              <span class="property-editor__form-help">0表示不自动刷新</span>
             </a-form-item>
           </template>
 
@@ -253,9 +253,9 @@ watch(
       styleForm.heightUnit = heightData.unit
 
       // 位置和层级
-      styleForm.left = parseFloat(newVal.style.left)
-      styleForm.top = parseFloat(newVal.style.top)
-      styleForm.zIndex = newVal.style.zIndex
+      styleForm.left = parseFloat(newVal.style.left || '0')
+      styleForm.top = parseFloat(newVal.style.top || '0')
+      styleForm.zIndex = newVal.style.zIndex || 0
 
       // 其他样式
       styleForm.backgroundColor = newVal.style.backgroundColor || ''
@@ -272,7 +272,7 @@ watch(
       if (newVal.dataSource?.data) {
         try {
           staticDataJson.value = JSON.stringify(newVal.dataSource.data, null, 2)
-        } catch (error) {
+        } catch {
           staticDataJson.value = ''
         }
       } else {
@@ -291,14 +291,14 @@ const updateStyle = (key: string, value: string | number) => {
 }
 
 // 更新组件属性
-const handleUpdateProps = (newProps: Record<string, any>) => {
+const handleUpdateProps = (newProps: Record<string, unknown>) => {
   const updatedComponent = { ...props.component }
   updatedComponent.props = newProps
   emit('update', updatedComponent)
 }
 
 // 更新数据源
-const updateDataSource = (key: string, value: any) => {
+const updateDataSource = (key: string, value: unknown) => {
   const updatedComponent = { ...props.component }
   if (!updatedComponent.dataSource) {
     updatedComponent.dataSource = {
@@ -347,21 +347,21 @@ const handleStaticDataUpdate = () => {
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .property-editor {
   width: 100%;
-}
 
-.color-block {
-  width: 16px;
-  height: 16px;
-  display: inline-block;
-  margin-right: 6px;
-  border: 1px solid #ddd;
-}
+  &__color-block {
+    width: 16px;
+    height: 16px;
+    display: inline-block;
+    margin-right: 6px;
+    border: 1px solid #ddd;
+  }
 
-.form-help {
-  color: #888;
-  font-size: 12px;
+  &__form-help {
+    color: #888;
+    font-size: 12px;
+  }
 }
 </style>
