@@ -11,21 +11,21 @@
       <div class="lowcode-editor__material-panel">
         <component-panel />
       </div>
-      <div class="lowcode-editor__render-panel" @dragover.prevent @drop="onDrop">
-        <div v-if="pageConfig.components.length === 0" class="lowcode-editor__empty-tip">
-          拖拽组件到此区域
-        </div>
-        <template v-else>
+      <div class="lowcode-editor__render-panel">
+        <VueDraggable
+          v-model="pageConfig.components"
+          group="components"
+          :sort="true"
+          item-key="id"
+          tag="div"
+          class="lowcode-editor__droppable-area"
+          @add="handleComponentAdded"
+        >
+          <!-- <template #item="{ element: component }"> -->
           <div
             v-for="component in pageConfig.components"
             :key="component.id"
             class="lowcode-editor__component-container"
-            :style="{
-              position: 'absolute',
-              left: component.style.left,
-              top: component.style.top,
-              zIndex: component.style.zIndex,
-            }"
             @click.stop="handleSelectComponent(component)"
           >
             <div
@@ -53,7 +53,13 @@
               </div>
             </div>
           </div>
-        </template>
+          <!-- </template> -->
+          <template #header>
+            <div v-if="pageConfig.components.length === 0" class="lowcode-editor__empty-tip">
+              拖拽组件到此区域
+            </div>
+          </template>
+        </VueDraggable>
       </div>
       <div class="lowcode-editor__property-panel">
         <h3>属性设置</h3>
@@ -71,8 +77,9 @@ import { reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { v4 as uuidv4 } from 'uuid'
+import { VueDraggable } from 'vue-draggable-plus'
 import PropertyEditor from './components/property-editor.vue'
-import ComponentPanel from './components/ComponentPanel.vue'
+import ComponentPanel from './components/component-panel.vue'
 import type { PageConfig, Component } from '@/types/lowcode.d'
 import { Input, Select, DatePicker, Radio, Checkbox, Button, Form, Table } from 'ant-design-vue'
 import { useComponentStore } from '@/stores/component'
@@ -116,60 +123,44 @@ const resolveComponent = (type: string) => {
   return componentMap[type] || 'div'
 }
 
-// 拖拽放置
-const onDrop = (event: DragEvent | string) => {
-  let componentType = ''
+// 处理新组件添加
+const handleComponentAdded = (event: { newIndex: number; item: HTMLElement }) => {
+  // 获取新添加的组件索引
+  const newIndex = event.newIndex
+  // 获取新添加的组件
+  const component = pageConfig.components[newIndex]
 
-  if (typeof event === 'string') {
-    componentType = event
-  } else {
-    componentType = event.dataTransfer?.getData('componentType') || ''
-    if (!componentType) return
+  // 这里处理新拖入的组件，添加必要的属性
+  if (!component.id) {
+    // 如果是从组件面板拖入的新组件，添加ID和样式属性
+    const allComponents = [...basicComponents, ...advancedComponents]
+    const componentConfig = allComponents.find((item) => item.type === component.type)
 
-    // 阻止默认行为
-    event.preventDefault()
-  }
+    if (componentConfig) {
+      // 使用新对象替换原组件
+      const newComponent: Component = {
+        id: uuidv4(),
+        type: component.type,
+        props: { ...componentConfig.defaultProps },
+        style: {
+          width: '100%',
+          marginBottom: '10px',
+        },
+        dataSource: {
+          type: 'static',
+          data: null,
+          url: '',
+          method: 'GET',
+          params: {},
+          refreshInterval: 0,
+        },
+        children: [],
+      }
 
-  // 创建新组件
-  const allComponents = [...basicComponents, ...advancedComponents]
-  const componentConfig = allComponents.find((item) => item.type === componentType)
-
-  if (componentConfig) {
-    // 计算放置位置，只有在拖放时才获取位置
-    let x = 100
-    let y = 100
-
-    if (typeof event !== 'string') {
-      const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
-      x = event.clientX - rect.left
-      y = event.clientY - rect.top
+      // 替换掉原始拖入的组件
+      pageConfig.components.splice(newIndex, 1, newComponent)
+      componentStore.setSelectedComponentId(newComponent.id)
     }
-
-    const newComponent: Component = {
-      id: uuidv4(),
-      type: componentType,
-      props: { ...componentConfig.defaultProps },
-      style: {
-        position: 'absolute',
-        left: `${x}px`,
-        top: `${y}px`,
-        width: '200px',
-        height: 'auto',
-        zIndex: pageConfig.components.length + 1,
-      },
-      dataSource: {
-        type: 'static',
-        data: null,
-        url: '',
-        method: 'GET',
-        params: {},
-        refreshInterval: 0,
-      },
-      children: [],
-    }
-
-    pageConfig.components.push(newComponent)
-    componentStore.setSelectedComponentId(newComponent.id)
   }
 }
 
@@ -246,9 +237,16 @@ const handleClear = () => {
 
   &__render-panel {
     flex: 1;
-    position: relative;
     background-color: #f5f5f5;
     overflow: auto;
+  }
+
+  &__droppable-area {
+    min-height: 100%;
+    width: 100%;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
   }
 
   &__property-panel {
@@ -258,45 +256,43 @@ const handleClear = () => {
     overflow-y: auto;
   }
 
-  &__component-item {
-    padding: 8px 12px;
-    margin-bottom: 8px;
-    border: 1px solid #eee;
-    background-color: #fff;
-    cursor: pointer;
-    user-select: none;
-  }
-
-  &__component-container {
-    position: absolute;
-  }
-
-  &__component-wrapper {
-    padding: 2px;
-    background-color: #fff;
-    min-width: 100px;
-    min-height: 30px;
-    border: 1px solid transparent;
-
-    &--selected {
-      border: 1px solid #1890ff;
-    }
-  }
-
-  &__component-actions {
-    position: absolute;
-    right: 0;
-    top: -30px;
-    background-color: #fff;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  }
-
   &__empty-tip {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
     color: #999;
+    font-size: 16px;
+  }
+
+  &__component-container {
+    margin-bottom: 12px;
+    min-height: 40px;
+  }
+
+  &__component-wrapper {
+    border: 1px solid transparent;
+    padding: 8px;
+    background-color: #fff;
+    border-radius: 4px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+
+    &--selected {
+      border: 1px dashed #1890ff;
+      background-color: rgba(24, 144, 255, 0.05);
+    }
+  }
+
+  &__component-actions {
+    position: absolute;
+    top: -30px;
+    right: 0;
+    background-color: #fff;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    padding: 2px;
+    display: flex;
+    gap: 4px;
   }
 }
 </style>

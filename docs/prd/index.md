@@ -11,6 +11,7 @@
 - 状态管理：Pinia
 - 路由：Vue Router
 - 构建工具：Vite
+- 包管理器: pnpm
 
 ## 功能需求详述
 

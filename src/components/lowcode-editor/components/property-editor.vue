@@ -79,36 +79,15 @@
                   @change="updateStyle('borderRadius', `${styleForm.borderRadius}px`)"
                 />
               </a-form-item>
-            </a-collapse-panel>
 
-            <a-collapse-panel key="position" header="位置设置">
-              <a-form-item label="X坐标">
+              <a-form-item label="下边距">
                 <a-input-number
-                  v-model:value="styleForm.left"
+                  v-model:value="styleForm.marginBottom"
                   :min="0"
+                  :max="100"
                   :addonAfter="'px'"
                   style="width: 150px"
-                  @change="updateStyle('left', `${styleForm.left}px`)"
-                />
-              </a-form-item>
-
-              <a-form-item label="Y坐标">
-                <a-input-number
-                  v-model:value="styleForm.top"
-                  :min="0"
-                  :addonAfter="'px'"
-                  style="width: 150px"
-                  @change="updateStyle('top', `${styleForm.top}px`)"
-                />
-              </a-form-item>
-
-              <a-form-item label="层级">
-                <a-input-number
-                  v-model:value="styleForm.zIndex"
-                  :min="0"
-                  :max="1000"
-                  style="width: 150px"
-                  @change="updateStyle('zIndex', styleForm.zIndex)"
+                  @change="updateStyle('marginBottom', `${styleForm.marginBottom}px`)"
                 />
               </a-form-item>
             </a-collapse-panel>
@@ -179,7 +158,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch } from 'vue'
+import { ref, reactive, watch } from 'vue'
 import type { Component } from '@/types/lowcode'
 import ComponentPropertyForm from './component-property-form.vue'
 
@@ -192,7 +171,7 @@ const emit = defineEmits<{
 }>()
 
 const activeTabKey = ref('basic')
-const basicActiveKeys = ref(['style', 'position'])
+const basicActiveKeys = ref(['style'])
 
 // 解析样式数据
 const parseStyleValue = (
@@ -218,12 +197,10 @@ const styleForm = reactive({
   widthUnit: 'px',
   height: 0,
   heightUnit: 'px',
-  left: 0,
-  top: 0,
-  zIndex: 0,
   backgroundColor: '',
   border: '',
   borderRadius: 0,
+  marginBottom: 0,
 })
 
 // 数据表单
@@ -252,15 +229,11 @@ watch(
       styleForm.height = heightData.value
       styleForm.heightUnit = heightData.unit
 
-      // 位置和层级
-      styleForm.left = parseFloat(newVal.style.left || '0')
-      styleForm.top = parseFloat(newVal.style.top || '0')
-      styleForm.zIndex = newVal.style.zIndex || 0
-
       // 其他样式
       styleForm.backgroundColor = newVal.style.backgroundColor || ''
       styleForm.border = newVal.style.border || ''
       styleForm.borderRadius = parseFloat(newVal.style.borderRadius || '0')
+      styleForm.marginBottom = parseFloat(newVal.style.marginBottom || '10')
 
       // 数据源
       dataForm.type = newVal.dataSource?.type || 'static'

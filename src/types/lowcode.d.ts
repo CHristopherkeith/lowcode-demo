@@ -1,11 +1,7 @@
 // 组件通用样式
 export interface ComponentStyle {
-  position?: string
-  left?: string
-  top?: string
   width?: string
   height?: string
-  zIndex?: number
   color?: string
   backgroundColor?: string
   fontSize?: string
@@ -14,6 +10,7 @@ export interface ComponentStyle {
   borderRadius?: string
   padding?: string
   margin?: string
+  marginBottom?: string
   [key: string]: unknown
 }
 

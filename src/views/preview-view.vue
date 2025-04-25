@@ -10,14 +10,8 @@
           v-for="component in pageConfig.components"
           :key="component.id"
           class="component-container"
-          :style="{
-            position: 'absolute',
-            left: component.style.left,
-            top: component.style.top,
-            zIndex: component.style.zIndex,
-          }"
         >
-          <div class="component-wrapper">
+          <div class="component-wrapper" :style="component.style">
             <component :is="resolveComponent(component.type)" v-bind="component.props" />
           </div>
         </div>
@@ -109,29 +103,29 @@ const backToEditor = () => {
 
 .preview-content {
   flex: 1;
-  position: relative;
   padding: 16px;
   background-color: #f5f5f5;
   min-height: calc(100vh - 60px);
   overflow: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .component-container {
-  position: absolute;
+  margin-bottom: 12px;
 }
 
 .component-wrapper {
-  padding: 2px;
+  padding: 8px;
   background-color: #fff;
   min-width: 100px;
   min-height: 30px;
   border: 1px solid transparent;
+  border-radius: 4px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
 }
 
 .empty-tip {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  margin: auto;
 }
 </style>
