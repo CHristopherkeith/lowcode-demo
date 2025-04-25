@@ -181,7 +181,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from 'vue'
 import type { Component } from '@/types/lowcode'
-import ComponentPropertyForm from './ComponentPropertyForm.vue'
+import ComponentPropertyForm from './component-property-form.vue'
 
 const props = defineProps<{
   component: Component
@@ -201,32 +201,32 @@ const parseStyleValue = (
 ): { value: number; unit: string } => {
   if (!value) return { value: 0, unit }
 
-  const match = value.toString().match(/^(\d+)(.*)$/)
-  if (match) {
-    return {
-      value: parseInt(match[1]),
-      unit: match[2] || unit,
-    }
+  if (value.endsWith('px')) {
+    return { value: parseFloat(value), unit: 'px' }
   }
 
-  return { value: 0, unit }
+  if (value.endsWith('%')) {
+    return { value: parseFloat(value), unit: '%' }
+  }
+
+  return { value: parseFloat(value), unit }
 }
 
-// 样式表单数据
+// 样式表单
 const styleForm = reactive({
   width: 0,
   widthUnit: 'px',
   height: 0,
   heightUnit: 'px',
-  backgroundColor: '',
-  border: '',
-  borderRadius: 0,
   left: 0,
   top: 0,
   zIndex: 0,
+  backgroundColor: '',
+  border: '',
+  borderRadius: 0,
 })
 
-// 数据源表单
+// 数据表单
 const dataForm = reactive({
   type: 'static',
   url: '',
@@ -234,44 +234,48 @@ const dataForm = reactive({
   refreshInterval: 0,
 })
 
-// 静态数据JSON字符串
+// 静态数据JSON
 const staticDataJson = ref('')
 
-// 初始化样式表单数据
+// 初始化表单数据
 watch(
   () => props.component,
   (newVal) => {
     if (newVal) {
       // 解析宽度
-      const widthResult = parseStyleValue(newVal.style.width, 'px')
-      styleForm.width = widthResult.value
-      styleForm.widthUnit = widthResult.unit
+      const widthData = parseStyleValue(newVal.style.width, 'px')
+      styleForm.width = widthData.value
+      styleForm.widthUnit = widthData.unit
 
       // 解析高度
-      const heightResult = parseStyleValue(newVal.style.height, 'px')
-      styleForm.height = heightResult.value
-      styleForm.heightUnit = heightResult.unit
+      const heightData = parseStyleValue(newVal.style.height, 'px')
+      styleForm.height = heightData.value
+      styleForm.heightUnit = heightData.unit
 
-      // 解析其他样式
+      // 位置和层级
+      styleForm.left = parseFloat(newVal.style.left)
+      styleForm.top = parseFloat(newVal.style.top)
+      styleForm.zIndex = newVal.style.zIndex
+
+      // 其他样式
       styleForm.backgroundColor = newVal.style.backgroundColor || ''
       styleForm.border = newVal.style.border || ''
-      styleForm.borderRadius = parseInt(String(newVal.style.borderRadius || '0'))
-      styleForm.left = parseInt(String(newVal.style.left || '0'))
-      styleForm.top = parseInt(String(newVal.style.top || '0'))
-      styleForm.zIndex = newVal.style.zIndex || 0
+      styleForm.borderRadius = parseFloat(newVal.style.borderRadius || '0')
 
       // 数据源
-      dataForm.type = newVal.dataSource.type
-      dataForm.url = newVal.dataSource.url
-      dataForm.method = newVal.dataSource.method
-      dataForm.refreshInterval = newVal.dataSource.refreshInterval
+      dataForm.type = newVal.dataSource?.type || 'static'
+      dataForm.url = newVal.dataSource?.url || ''
+      dataForm.method = newVal.dataSource?.method || 'GET'
+      dataForm.refreshInterval = newVal.dataSource?.refreshInterval || 0
 
       // 静态数据
-      try {
-        staticDataJson.value = newVal.dataSource.data
-          ? JSON.stringify(newVal.dataSource.data, null, 2)
-          : ''
-      } catch (e) {
+      if (newVal.dataSource?.data) {
+        try {
+          staticDataJson.value = JSON.stringify(newVal.dataSource.data, null, 2)
+        } catch (error) {
+          staticDataJson.value = ''
+        }
+      } else {
         staticDataJson.value = ''
       }
     }
@@ -279,24 +283,39 @@ watch(
   { immediate: true, deep: true },
 )
 
-// 更新组件样式
-const updateStyle = (key: string, value: any) => {
-  const updatedComponent = JSON.parse(JSON.stringify(props.component))
-  updatedComponent.style[key] = value
+// 更新样式
+const updateStyle = (key: string, value: string | number) => {
+  const updatedComponent = { ...props.component }
+  updatedComponent.style = { ...updatedComponent.style, [key]: value }
   emit('update', updatedComponent)
 }
 
 // 更新组件属性
 const handleUpdateProps = (newProps: Record<string, any>) => {
-  const updatedComponent = JSON.parse(JSON.stringify(props.component))
+  const updatedComponent = { ...props.component }
   updatedComponent.props = newProps
   emit('update', updatedComponent)
 }
 
-// 更新数据源属性
+// 更新数据源
 const updateDataSource = (key: string, value: any) => {
-  const updatedComponent = JSON.parse(JSON.stringify(props.component))
-  updatedComponent.dataSource[key] = value
+  const updatedComponent = { ...props.component }
+  if (!updatedComponent.dataSource) {
+    updatedComponent.dataSource = {
+      type: 'static',
+      data: null,
+      url: '',
+      method: 'GET',
+      params: {},
+      refreshInterval: 0,
+    }
+  }
+
+  updatedComponent.dataSource = {
+    ...updatedComponent.dataSource,
+    [key]: value,
+  }
+
   emit('update', updatedComponent)
 }
 
@@ -304,20 +323,33 @@ const updateDataSource = (key: string, value: any) => {
 const handleStaticDataUpdate = () => {
   try {
     const data = staticDataJson.value ? JSON.parse(staticDataJson.value) : null
-    const updatedComponent = JSON.parse(JSON.stringify(props.component))
-    updatedComponent.dataSource.data = data
+    const updatedComponent = { ...props.component }
+    if (!updatedComponent.dataSource) {
+      updatedComponent.dataSource = {
+        type: 'static',
+        data: null,
+        url: '',
+        method: 'GET',
+        params: {},
+        refreshInterval: 0,
+      }
+    }
+
+    updatedComponent.dataSource = {
+      ...updatedComponent.dataSource,
+      data,
+    }
+
     emit('update', updatedComponent)
-  } catch (e) {
-    // 解析错误处理
-    console.error('JSON解析错误:', e)
+  } catch (error) {
+    console.error('JSON解析错误', error)
   }
 }
 </script>
 
 <style scoped>
 .property-editor {
-  height: 100%;
-  overflow-y: auto;
+  width: 100%;
 }
 
 .color-block {
@@ -329,7 +361,7 @@ const handleStaticDataUpdate = () => {
 }
 
 .form-help {
+  color: #888;
   font-size: 12px;
-  color: #aaa;
 }
 </style>

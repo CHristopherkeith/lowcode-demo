@@ -80,8 +80,8 @@ import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { v4 as uuidv4 } from 'uuid'
-import PropertyEditor from './components/PropertyEditor.vue'
-import { basicComponents, advancedComponents } from './config/componentConfig'
+import PropertyEditor from './components/property-editor.vue'
+import { basicComponents, advancedComponents } from './config/component-config'
 import type { PageConfig, Component, ComponentDefinition } from '@/types/lowcode'
 import { Input, Select, DatePicker, Radio, Checkbox, Button, Form, Table } from 'ant-design-vue'
 import { useComponentStore } from '@/stores/component'
@@ -202,7 +202,7 @@ const handleUpdateComponent = (updatedComponent: Component) => {
 // 保存配置
 const handleSave = () => {
   localStorage.setItem('lowcodePageConfig', JSON.stringify(pageConfig))
-  message.success('保存成功')
+  message.success('配置已保存')
 }
 
 // 预览
@@ -211,7 +211,7 @@ const handlePreview = () => {
   router.push('/preview')
 }
 
-// 清空画布
+// 清空
 const handleClear = () => {
   pageConfig.components = []
   componentStore.setSelectedComponentId(null)
@@ -221,7 +221,7 @@ const handleClear = () => {
 
 <style scoped>
 .lowcode-editor {
-  height: 100vh;
+  height: 100%;
   display: flex;
   flex-direction: column;
 }
@@ -238,7 +238,6 @@ const handleClear = () => {
   flex: 1;
   display: flex;
   overflow: hidden;
-  height: calc(100vh - 50px);
 }
 
 .material-panel {
@@ -246,8 +245,6 @@ const handleClear = () => {
   padding: 16px;
   border-right: 1px solid #eee;
   overflow-y: auto;
-  flex-shrink: 0;
-  background-color: #fff;
 }
 
 .render-panel {
@@ -255,7 +252,6 @@ const handleClear = () => {
   position: relative;
   background-color: #f5f5f5;
   overflow: auto;
-  min-height: 100%;
 }
 
 .property-panel {
@@ -263,49 +259,39 @@ const handleClear = () => {
   padding: 16px;
   border-left: 1px solid #eee;
   overflow-y: auto;
-  flex-shrink: 0;
-  background-color: #fff;
 }
 
 .component-item {
   padding: 8px 12px;
   margin-bottom: 8px;
-  border: 1px dashed #ccc;
-  cursor: move;
+  border: 1px solid #eee;
   background-color: #fff;
-  border-radius: 4px;
-}
-
-.component-item:hover {
-  border-color: #1890ff;
-  color: #1890ff;
+  cursor: pointer;
+  user-select: none;
 }
 
 .component-container {
   position: absolute;
-  cursor: move;
 }
 
 .component-wrapper {
   padding: 2px;
   background-color: #fff;
-  border: 1px solid transparent;
   min-width: 100px;
   min-height: 30px;
+  border: 1px solid transparent;
 }
 
 .component-wrapper.selected {
-  border: 1px dashed #1890ff;
+  border: 1px solid #1890ff;
 }
 
 .component-actions {
   position: absolute;
-  top: -30px;
   right: 0;
+  top: -30px;
   background-color: #fff;
-  border: 1px solid #eee;
-  display: flex;
-  z-index: 100;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .empty-tip {
@@ -313,7 +299,6 @@ const handleClear = () => {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  color: #aaa;
-  font-size: 14px;
+  color: #999;
 }
 </style>

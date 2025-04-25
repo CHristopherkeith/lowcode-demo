@@ -1,7 +1,7 @@
 <template>
   <div
     :class="['component-wrapper', { selected: isSelected }]"
-    :style="wrapperStyles"
+    :style="wrapperStylesObj"
     @click.stop="handleClick"
   >
     <component :is="resolveComponent(config.type)" v-bind="componentProps" />
@@ -12,10 +12,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import type { Component } from '@/types/lowcode'
 import { Input, Select, DatePicker, Radio, Checkbox, Button, Form, Table } from 'ant-design-vue'
 import { useComponentStore } from '@/stores/component'
+import type { CSSProperties } from 'vue'
 
 const props = defineProps<{
   config: Component
@@ -45,7 +46,7 @@ const handleDelete = () => {
 
 // 解析组件类型为对应的组件
 const resolveComponent = (type: string) => {
-  const componentMap: Record<string, any> = {
+  const componentMap: Record<string, unknown> = {
     input: Input,
     select: Select,
     datePicker: DatePicker,
@@ -74,11 +75,31 @@ const componentProps = computed(() => {
   return result
 })
 
-// 组件容器样式
-const wrapperStyles = computed(() => ({
-  ...props.config.style,
-  cursor: props.isEditor ? 'move' : 'auto',
-}))
+// 有效的 CSS position 类型
+type CSSPositionType = 'static' | 'relative' | 'absolute' | 'fixed' | 'sticky'
+
+// 组件容器样式 - 转换为 CSSProperties 类型
+const wrapperStylesObj = computed<CSSProperties>(() => {
+  const baseStyle: CSSProperties = {
+    cursor: props.isEditor ? 'move' : 'auto',
+  }
+
+  // 添加其他样式属性
+  if (props.config.style.position) {
+    baseStyle.position = props.config.style.position as CSSPositionType
+  }
+  if (props.config.style.left) baseStyle.left = props.config.style.left
+  if (props.config.style.top) baseStyle.top = props.config.style.top
+  if (props.config.style.width) baseStyle.width = props.config.style.width
+  if (props.config.style.height) baseStyle.height = props.config.style.height
+  if (props.config.style.zIndex) baseStyle.zIndex = props.config.style.zIndex
+  if (props.config.style.backgroundColor)
+    baseStyle.backgroundColor = props.config.style.backgroundColor
+  if (props.config.style.border) baseStyle.border = props.config.style.border
+  if (props.config.style.borderRadius) baseStyle.borderRadius = props.config.style.borderRadius
+
+  return baseStyle
+})
 </script>
 
 <style scoped>

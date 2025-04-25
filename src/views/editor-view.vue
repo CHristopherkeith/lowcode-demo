@@ -1,11 +1,11 @@
 <template>
   <div class="editor-view">
-    <lowcode-editor-page />
+    <lowcode-editor />
   </div>
 </template>
 
 <script setup lang="ts">
-import LowcodeEditorPage from '@/components/LowcodeEditor/LowcodeEditorPage.vue'
+import LowcodeEditor from '@/components/lowcode-editor/index.vue'
 </script>
 
 <style scoped>

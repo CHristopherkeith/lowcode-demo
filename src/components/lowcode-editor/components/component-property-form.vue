@@ -45,7 +45,7 @@
               <template #prefix>
                 <div
                   class="color-block"
-                  :style="{ backgroundColor: propValues[config.name] || '#ffffff' }"
+                  :style="{ backgroundColor: String(propValues[config.name] || '#ffffff') }"
                 ></div>
               </template>
             </a-input>
@@ -60,20 +60,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch } from 'vue'
+import { reactive, computed, watch } from 'vue'
 import type { Component, PropConfig } from '@/types/lowcode'
-import { basicComponents, advancedComponents } from '../config/componentConfig'
+import { basicComponents, advancedComponents } from '../config/component-config'
 
 const props = defineProps<{
   component: Component
 }>()
 
 const emit = defineEmits<{
-  (e: 'update', newProps: Record<string, any>): void
+  (e: 'update', newProps: Record<string, unknown>): void
 }>()
 
 // 组件属性值
-const propValues = reactive<Record<string, any>>({})
+const propValues = reactive<Record<string, unknown>>({})
 
 // 获取组件的属性配置
 const propConfigs = computed<PropConfig[]>(() => {

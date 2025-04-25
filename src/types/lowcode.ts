@@ -14,16 +14,16 @@ export interface ComponentStyle {
   borderRadius?: string
   padding?: string
   margin?: string
-  [key: string]: any
+  [key: string]: unknown
 }
 
 // 数据源配置
 export interface DataSource {
   type: 'static' | 'api'
-  data: any
+  data: unknown
   url: string
   method: 'GET' | 'POST' | 'PUT' | 'DELETE'
-  params: Record<string, any>
+  params: Record<string, unknown>
   refreshInterval: number // 刷新间隔，单位秒，0表示不自动刷新
 }
 
@@ -31,7 +31,7 @@ export interface DataSource {
 export interface Component {
   id: string
   type: string
-  props: Record<string, any>
+  props: Record<string, unknown>
   style: ComponentStyle
   dataSource: DataSource
   children: Component[]
@@ -43,7 +43,7 @@ export type LayoutType = 'flex' | 'grid' | 'free'
 // 布局配置
 export interface LayoutConfig {
   type: LayoutType
-  props: Record<string, any>
+  props: Record<string, unknown>
 }
 
 // 页面配置
@@ -59,7 +59,7 @@ export interface ComponentDefinition {
   type: string
   name: string
   icon?: string
-  defaultProps: Record<string, any>
+  defaultProps: Record<string, unknown>
   propConfig: PropConfig[]
 }
 
@@ -68,6 +68,6 @@ export interface PropConfig {
   name: string
   label: string
   type: 'string' | 'number' | 'boolean' | 'select' | 'color' | 'datePicker'
-  defaultValue?: any
-  options?: Array<{ label: string; value: any }> // 用于select类型
+  defaultValue?: unknown
+  options?: Array<{ label: string; value: unknown }> // 用于select类型
 }
