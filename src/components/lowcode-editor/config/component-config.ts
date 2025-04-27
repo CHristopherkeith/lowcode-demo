@@ -162,6 +162,7 @@ export const basicComponents: ComponentDefinition[] = [
       },
     ],
   },
+  /* 暂时屏蔽日期选择器组件
   {
     type: 'datePicker',
     name: '日期选择器',
@@ -199,6 +200,7 @@ export const basicComponents: ComponentDefinition[] = [
       },
     ],
   },
+  */
   {
     type: 'radio',
     name: '单选框',

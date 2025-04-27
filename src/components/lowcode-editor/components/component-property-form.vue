@@ -220,9 +220,9 @@ const handlePropChange = () => {
               ? []
               : info.type === 'input'
                 ? '默认文本'
-                : info.type === 'datePicker'
-                  ? '2023-01-01'
-                  : null)
+                : // : info.type === 'datePicker'  // 暂时屏蔽日期选择器
+                  //   ? '2023-01-01'
+                  null)
           return acc
         },
         {} as Record<string, any>,

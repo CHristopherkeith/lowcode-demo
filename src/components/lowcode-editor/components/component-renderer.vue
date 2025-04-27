@@ -176,7 +176,7 @@ import type { Component } from '@/types/lowcode.d'
 import {
   Input,
   Select,
-  DatePicker,
+  // DatePicker, // 暂时屏蔽日期选择器
   Radio,
   Checkbox,
   Button,
@@ -365,7 +365,7 @@ const resolveComponent = (type: string) => {
   const componentMap: Record<string, unknown> = {
     input: Input,
     select: Select,
-    datePicker: DatePicker,
+    // datePicker: DatePicker, // 暂时屏蔽日期选择器
     radio: Radio.Group,
     checkbox: Checkbox.Group,
     button: Button,
@@ -597,6 +597,7 @@ const handleButtonClick = () => {
               parentForm.dataSource.dataSaveApi.url,
               demoData,
               parentForm.dataSource.dataSaveApi.method,
+              true, // 表单保存后同步更新localStorage
             )
             return
           }
@@ -607,6 +608,7 @@ const handleButtonClick = () => {
           parentForm.dataSource.dataSaveApi.url,
           formData,
           parentForm.dataSource.dataSaveApi.method,
+          true, // 表单保存后同步更新localStorage
         )
       } else {
         // 提示用户需要先配置表单的数据保存API
@@ -624,7 +626,12 @@ const handleButtonClick = () => {
 }
 
 // 提交表单数据到API
-const submitFormData = (url: string, data: Record<string, unknown>, method: string = 'POST') => {
+const submitFormData = (
+  url: string,
+  data: Record<string, unknown>,
+  method: string = 'POST',
+  saveToStorage: boolean = false,
+) => {
   // 在实际项目中，应使用axios或fetch进行API调用
   // 这里简单模拟API调用
   console.log('==================================')
@@ -640,6 +647,30 @@ const submitFormData = (url: string, data: Record<string, unknown>, method: stri
   setTimeout(() => {
     console.log('API调用完成，服务器返回成功')
     message.success('表单数据保存成功')
+
+    // 如果需要，同步保存整个页面配置到localStorage
+    if (saveToStorage) {
+      // 如果表单提交的数据需要同步到对应表单组件的dataSource.data中，可以在这里实现
+      console.log('同步保存表单数据到页面配置...')
+
+      // 查找当前数据对应的表单组件并更新其数据
+      const formComponent = componentStore.findFormComponent(props.config.id)
+      if (formComponent) {
+        // 更新表单组件的静态数据
+        formComponent.dataSource = {
+          ...formComponent.dataSource,
+          data: data, // 更新为当前提交的数据
+        }
+
+        // 更新组件存储中的组件
+        componentStore.updateComponent(formComponent)
+      }
+
+      // 保存整个页面配置到localStorage
+      const savedConfig = componentStore.savePageConfig()
+      console.log('页面配置已保存到localStorage:', savedConfig)
+      message.success('页面配置已保存')
+    }
   }, 1000)
 }
 

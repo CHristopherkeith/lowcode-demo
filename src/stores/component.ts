@@ -140,8 +140,38 @@ export const useComponentStore = defineStore('component', () => {
         // 统一获取值逻辑
         value = comp.props.value || comp.props.defaultValue || componentConfig.defaultValue
 
+        /* 暂时屏蔽日期选择器的特殊处理
+        // 特殊处理日期选择器的值
+        if (comp.type === 'datePicker' && value) {
+          // 获取配置的日期格式
+          const format = comp.props.format ? String(comp.props.format) : 'YYYY-MM-DD';
+          console.log(`日期选择器使用格式: ${format}`);
+
+          try {
+            // 如果是Date对象
+            if (value instanceof Date) {
+              // 转为ISO字符串再取日期部分作为简单格式化
+              value = value.toISOString().split('T')[0];
+            }
+            // 如果是对象且可能有format方法(如moment/dayjs对象)
+            else if (value !== null && typeof value === 'object') {
+              // 使用类型断言处理
+              const dateObj = value as any;
+              if (typeof dateObj.format === 'function') {
+                value = dateObj.format(format);
+              }
+            }
+
+            console.log(`日期选择器 ${comp.props.fieldName} 格式化后的值:`, value);
+          } catch (e) {
+            console.error('日期格式化错误:', e);
+            // 保持原值处理
+          }
+        }
+        */
+
         // 记录日志
-        console.log(`  表单字段 ${comp.fieldName} 值(${componentConfig.logName}):`, value)
+        console.log(`  表单字段 ${comp.props.fieldName} 值(${componentConfig.logName}):`, value)
 
         // 保存值到表单数据对象
         formData[comp.props.fieldName] = value
