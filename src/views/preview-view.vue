@@ -12,7 +12,7 @@
           class="component-container"
         >
           <div class="component-wrapper" :style="component.style">
-            <component :is="resolveComponent(component.type)" v-bind="resolveProps(component)" />
+            <component-renderer :config="component" :is-editor="false" />
           </div>
         </div>
       </template>
@@ -26,11 +26,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, defineAsyncComponent } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import type { PageConfig } from '@/types/lowcode'
-import { Input, Select, DatePicker, Radio, Checkbox, Button, Form, Table } from 'ant-design-vue'
+import ComponentRenderer from '../components/lowcode-editor/components/component-renderer.vue'
 
 const router = useRouter()
 
@@ -46,64 +46,6 @@ const defaultPageConfig: PageConfig = {
 }
 
 const pageConfig = ref<PageConfig>(defaultPageConfig)
-
-// 解析组件类型为对应的组件
-const resolveComponent = (type: string) => {
-  const componentMap: Record<string, unknown> = {
-    input: Input,
-    select: Select,
-    datePicker: DatePicker,
-    radio: Radio.Group,
-    checkbox: Checkbox.Group,
-    button: Button,
-    form: Form,
-    table: Table,
-    barChart: defineAsyncComponent(() =>
-      import('../components/lowcode-editor/components/chart-component.vue').then((comp) => ({
-        ...comp.default,
-        props: {
-          ...comp.default.props,
-          type: { default: 'bar' },
-        },
-      })),
-    ),
-    lineChart: defineAsyncComponent(() =>
-      import('../components/lowcode-editor/components/chart-component.vue').then((comp) => ({
-        ...comp.default,
-        props: {
-          ...comp.default.props,
-          type: { default: 'line' },
-        },
-      })),
-    ),
-  }
-
-  return componentMap[type] || 'div'
-}
-
-// 处理组件属性
-const resolveProps = (component: Component) => {
-  const { type, props, dataSource } = component
-  const result = { ...props }
-
-  // 处理按钮组件
-  if (type === 'button' && result.text) {
-    result.children = result.text
-    delete result.text
-  }
-
-  // 为图表组件提供数据源
-  if ((type === 'barChart' || type === 'lineChart') && dataSource) {
-    result.dataSource = dataSource
-  }
-
-  // 为表格组件提供数据源
-  if (type === 'table' && dataSource && dataSource.data) {
-    result.dataSource = dataSource.data
-  }
-
-  return result
-}
 
 // 加载页面配置
 onMounted(() => {
