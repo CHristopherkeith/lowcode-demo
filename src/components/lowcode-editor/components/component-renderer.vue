@@ -59,6 +59,32 @@
           </template>
         </VueDraggable>
       </template>
+      <!-- 表单容器，只能放置基础表单组件 -->
+      <template v-else-if="config.type === 'form'">
+        <VueDraggable
+          v-model="config.children"
+          :group="{ name: 'components', put: validateFormChildren }"
+          :sort="true"
+          item-key="id"
+          tag="div"
+          class="component-renderer__dropable-area"
+          @add="handleChildAdded"
+        >
+          <component-renderer
+            v-for="child in config.children"
+            :key="child.id"
+            :config="child"
+            :is-editor="isEditor"
+            @select="handleSelectChild"
+            @delete="handleDeleteChild"
+          />
+          <template #header>
+            <div v-if="config.children.length === 0" class="component-renderer__empty-tip">
+              只能拖入基础表单组件
+            </div>
+          </template>
+        </VueDraggable>
+      </template>
       <!-- 非Col的容器，直接显示子组件 -->
       <template v-else-if="config.children && config.children.length > 0">
         <component-renderer
@@ -132,6 +158,18 @@ const validateNotRow = (to: unknown, from: unknown, dragEl: HTMLElement, event: 
   const draggedType = dragEl.getAttribute('data-type')
   // 不允许row类型组件
   return draggedType !== 'row'
+}
+
+// 验证函数：表单组件只能放置基础表单组件
+const validateFormChildren = (to: unknown, from: unknown, dragEl: HTMLElement, event: unknown) => {
+  // 获取被拖拽元素的组件类型
+  const draggedType = dragEl.getAttribute('data-type')
+
+  // 基础表单组件类型列表
+  const basicFormTypes = basicComponents.map((comp) => comp.type)
+
+  // 只允许基础表单组件类型
+  return basicFormTypes.includes(draggedType || '')
 }
 
 // 组件点击事件

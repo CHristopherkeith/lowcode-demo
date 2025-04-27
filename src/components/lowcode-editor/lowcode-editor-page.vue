@@ -35,7 +35,7 @@
           </div>
           <template #header>
             <div v-if="pageConfig.components.length === 0" class="lowcode-editor__empty-tip">
-              拖拽组件到此区域（栅格列只能放在栅格行中）
+              拖拽组件到此区域（栅格列只能放在栅格行中，基础表单组件只能放在表单中）
             </div>
           </template>
         </VueDraggable>
@@ -103,12 +103,17 @@ const pageConfig = reactive<PageConfig>({
   components: [],
 })
 
-// 验证函数：不允许将Col直接拖到顶层
+// 验证函数：不允许将Col直接拖到顶层，基础表单组件只能放在表单组件内
 const validateMainDrop = (to: unknown, from: unknown, dragEl: HTMLElement, event: unknown) => {
   // 获取被拖拽元素的组件类型
   const draggedType = dragEl.getAttribute('data-type')
+
+  // 基础表单组件类型列表
+  const basicFormTypes = basicComponents.map((comp) => comp.type)
+
   // 不允许col类型组件直接拖到顶层，col只能作为row的子组件
-  return draggedType !== 'col'
+  // 不允许基础表单组件直接拖到顶层，基础表单组件只能放在表单组件内
+  return draggedType !== 'col' && !basicFormTypes.includes(draggedType || '')
 }
 
 // 处理新组件添加
