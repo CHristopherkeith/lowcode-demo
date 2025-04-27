@@ -428,19 +428,49 @@ const updateDataSaveApi = (key: string, value: string) => {
       method: 'GET',
       params: {},
       refreshInterval: 0,
+      dataSaveApi: {
+        url: '',
+        method: 'POST' as 'POST' | 'PUT',
+      },
+    }
+  }
+
+  // 确保dataSaveApi存在
+  if (!updatedComponent.dataSource.dataSaveApi) {
+    updatedComponent.dataSource.dataSaveApi = {
+      url: '',
+      method: 'POST' as 'POST' | 'PUT',
     }
   }
 
   updatedComponent.dataSource = {
     ...updatedComponent.dataSource,
     dataSaveApi: {
-      ...updatedComponent.dataSource.dataSaveApi,
+      url: updatedComponent.dataSource.dataSaveApi?.url || '',
+      method: (updatedComponent.dataSource.dataSaveApi?.method || 'POST') as 'POST' | 'PUT',
       [key]: value,
     },
   }
 
   emit('update', updatedComponent)
 }
+
+// 监听数据源类型变化，立即更新组件
+watch(
+  () => dataForm.type,
+  (newType) => {
+    console.log('数据源类型变更为:', newType)
+    if (props.component && props.component.dataSource) {
+      // 立即更新组件的数据源类型
+      const updatedComponent = { ...props.component }
+      updatedComponent.dataSource = {
+        ...updatedComponent.dataSource,
+        type: newType,
+      }
+      emit('update', updatedComponent)
+    }
+  },
+)
 </script>
 
 <style lang="scss" scoped>
