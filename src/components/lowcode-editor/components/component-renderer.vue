@@ -171,7 +171,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineAsyncComponent } from 'vue'
+import { computed, defineAsyncComponent, ref, watch, onMounted, onUnmounted } from 'vue'
 import type { Component } from '@/types/lowcode.d'
 import {
   Input,
@@ -194,6 +194,7 @@ import {
   advancedComponents,
   containerComponents,
 } from '../config/component-config'
+import { fetchApiData, setupRefreshTimer, clearRefreshTimer } from '@/utils/api-service'
 
 // 解决循环引用问题
 // const ComponentRenderer = defineAsyncComponent(() => import('./component-renderer.vue'))
@@ -210,6 +211,100 @@ const emit = defineEmits<{
 
 const componentStore = useComponentStore()
 const isSelected = computed(() => componentStore.selectedComponentId === props.config.id)
+
+// 保存API数据刷新定时器的引用
+const apiRefreshTimers = ref<Record<string, number | null>>({})
+
+// 组件挂载时处理API数据源
+onMounted(() => {
+  // 仅当组件不在编辑器中时才加载API数据
+  if (!props.isEditor && props.config.dataSource?.type === 'api' && props.config.dataSource.url) {
+    loadApiData()
+  }
+})
+
+// 组件销毁时清除定时器
+onUnmounted(() => {
+  clearApiRefreshTimers()
+})
+
+// 加载API数据
+const loadApiData = () => {
+  if (!(props.config.dataSource?.type === 'api' && props.config.dataSource?.url)) return
+
+  console.log(`[${props.config.type}] 开始加载API数据，URL:`, props.config.dataSource.url)
+
+  // 清除之前的定时器
+  clearApiRefreshTimers()
+
+  // 获取API数据
+  fetchApiData(props.config.type, props.config.dataSource, (data) => {
+    console.log(`[${props.config.type}] API数据加载成功:`, data)
+
+    // 更新组件的数据源数据
+    const updatedComponent = { ...props.config }
+    updatedComponent.dataSource = {
+      ...updatedComponent.dataSource,
+      data,
+    }
+
+    // 更新组件
+    componentStore.updateComponent(updatedComponent)
+  })
+
+  // 设置定时刷新
+  if (props.config.dataSource.refreshInterval > 0) {
+    apiRefreshTimers.value[props.config.id] = setupRefreshTimer(
+      props.config.id,
+      props.config.type,
+      props.config.dataSource,
+      (data) => {
+        // 更新组件的数据源数据
+        const updatedComponent = { ...props.config }
+        updatedComponent.dataSource = {
+          ...updatedComponent.dataSource,
+          data,
+        }
+
+        // 更新组件
+        componentStore.updateComponent(updatedComponent)
+      },
+    )
+  }
+}
+
+// 清除API刷新定时器
+const clearApiRefreshTimers = () => {
+  Object.values(apiRefreshTimers.value).forEach((timerId) => {
+    clearRefreshTimer(timerId)
+  })
+  apiRefreshTimers.value = {}
+}
+
+// 监听数据源配置变化
+watch(
+  () => [
+    props.config.dataSource?.type,
+    props.config.dataSource?.url,
+    props.config.dataSource?.refreshInterval,
+    props.isEditor, // 也监听编辑器状态变化
+  ],
+  ([newType, newUrl, newInterval, isEditor], [oldType, oldUrl, oldInterval]) => {
+    // 仅在预览模式下且数据源为API类型时加载API数据
+    if (!isEditor && newType === 'api' && newUrl) {
+      const configChanged = newType !== oldType || newUrl !== oldUrl || newInterval !== oldInterval
+
+      if (configChanged) {
+        console.log(`[${props.config.type}] 数据源配置变化，重新加载API数据`)
+        loadApiData()
+      }
+    } else if (newType === 'static' && oldType === 'api') {
+      // 如果从API类型变为静态类型，清除定时器
+      clearApiRefreshTimers()
+    }
+  },
+  { deep: true },
+)
 
 // 验证函数：只允许拖入列容器
 const validateColOnly = (to: unknown, from: unknown, dragEl: HTMLElement) => {
