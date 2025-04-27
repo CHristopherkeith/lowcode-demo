@@ -91,8 +91,15 @@ export const basicComponents: ComponentDefinition[] = [
     defaultProps: {
       placeholder: '请输入内容',
       allowClear: true,
+      label: '输入框',
     },
     propConfig: [
+      {
+        name: 'label',
+        label: '字段标签',
+        type: 'string',
+        defaultValue: '输入框',
+      },
       {
         name: 'placeholder',
         label: '占位提示',
@@ -118,8 +125,15 @@ export const basicComponents: ComponentDefinition[] = [
         { label: '选项2', value: '2' },
       ],
       allowClear: true,
+      label: '下拉选择框',
     },
     propConfig: [
+      {
+        name: 'label',
+        label: '字段标签',
+        type: 'string',
+        defaultValue: '下拉选择框',
+      },
       {
         name: 'placeholder',
         label: '占位提示',
@@ -141,8 +155,15 @@ export const basicComponents: ComponentDefinition[] = [
     defaultProps: {
       placeholder: '请选择日期',
       format: 'YYYY-MM-DD',
+      label: '日期选择器',
     },
     propConfig: [
+      {
+        name: 'label',
+        label: '字段标签',
+        type: 'string',
+        defaultValue: '日期选择器',
+      },
       {
         name: 'placeholder',
         label: '占位提示',
@@ -166,8 +187,15 @@ export const basicComponents: ComponentDefinition[] = [
         { label: '选项1', value: '1' },
         { label: '选项2', value: '2' },
       ],
+      label: '单选框',
     },
     propConfig: [
+      {
+        name: 'label',
+        label: '字段标签',
+        type: 'string',
+        defaultValue: '单选框',
+      },
       {
         name: 'options',
         label: '选项列表',
@@ -188,8 +216,15 @@ export const basicComponents: ComponentDefinition[] = [
         { label: '选项1', value: '1' },
         { label: '选项2', value: '2' },
       ],
+      label: '复选框',
     },
     propConfig: [
+      {
+        name: 'label',
+        label: '字段标签',
+        type: 'string',
+        defaultValue: '复选框',
+      },
       {
         name: 'options',
         label: '选项列表',
@@ -208,8 +243,15 @@ export const basicComponents: ComponentDefinition[] = [
     defaultProps: {
       text: '按钮',
       type: 'primary',
+      label: '按钮',
     },
     propConfig: [
+      {
+        name: 'label',
+        label: '字段标签',
+        type: 'string',
+        defaultValue: '按钮',
+      },
       {
         name: 'text',
         label: '按钮文本',
@@ -242,6 +284,7 @@ export const advancedComponents: ComponentDefinition[] = [
     defaultProps: {
       labelCol: { span: 6 },
       wrapperCol: { span: 18 },
+      layout: 'horizontal',
     },
     propConfig: [
       {
@@ -255,6 +298,17 @@ export const advancedComponents: ComponentDefinition[] = [
         label: '控件列宽',
         type: 'number',
         defaultValue: 18,
+      },
+      {
+        name: 'layout',
+        label: '布局方式',
+        type: 'select',
+        defaultValue: 'horizontal',
+        options: [
+          { label: '水平布局', value: 'horizontal' },
+          { label: '垂直布局', value: 'vertical' },
+          { label: '内联布局', value: 'inline' },
+        ],
       },
     ],
   },
