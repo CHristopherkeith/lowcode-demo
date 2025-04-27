@@ -68,28 +68,67 @@
           item-key="id"
           tag="div"
           class="component-renderer__dropable-area"
+          :class="{ 'component-renderer__inline-form': config.props.layout === 'inline' }"
           @add="handleChildAdded"
         >
           <template v-for="child in config.children" :key="child.id">
-            <a-form-item
-              v-if="child.props && child.props.label"
-              :label="child.props.label"
-              :label-col="getFormItemLabelCol(config.props)"
+            <div
+              v-if="config.props.layout === 'inline'"
+              class="inline-form-item-wrapper"
+              :style="{
+                display: 'inline-block',
+                width: child.style.width || 'auto',
+                marginRight: '16px',
+                marginBottom: '8px',
+                verticalAlign: 'top',
+              }"
             >
+              <a-form-item
+                v-if="child.props && child.props.label"
+                :label="child.props.label"
+                :label-col="getFormItemLabelCol(config.props)"
+                class="inline-form-item"
+                style="width: 100%"
+              >
+                <div style="width: 100%">
+                  <component-renderer
+                    :config="child"
+                    :is-editor="isEditor"
+                    @select="handleSelectChild"
+                    @delete="handleDeleteChild"
+                  />
+                </div>
+              </a-form-item>
               <component-renderer
+                v-else
+                :config="child"
+                :is-editor="isEditor"
+                @select="handleSelectChild"
+                @delete="handleDeleteChild"
+                style="width: 100%"
+              />
+            </div>
+            <template v-else>
+              <a-form-item
+                v-if="child.props && child.props.label"
+                :label="child.props.label"
+                :label-col="getFormItemLabelCol(config.props)"
+              >
+                <component-renderer
+                  :config="child"
+                  :is-editor="isEditor"
+                  @select="handleSelectChild"
+                  @delete="handleDeleteChild"
+                />
+              </a-form-item>
+              <component-renderer
+                v-else
                 :config="child"
                 :is-editor="isEditor"
                 @select="handleSelectChild"
                 @delete="handleDeleteChild"
               />
-            </a-form-item>
-            <component-renderer
-              v-else
-              :config="child"
-              :is-editor="isEditor"
-              @select="handleSelectChild"
-              @delete="handleDeleteChild"
-            />
+            </template>
           </template>
           <template #header>
             <div v-if="config.children.length === 0" class="component-renderer__empty-tip">
@@ -245,6 +284,14 @@ const handleChildAdded = (event: { newIndex: number; item: HTMLElement }) => {
       // 若当前容器是row，且新拖入的是col，设置宽度为50%
       if (props.config.type === 'row' && child.type === 'col') {
         newComponent.props.span = 12 // 设置为50%宽度
+      }
+
+      // 若当前容器是表单，且表单布局是内联
+      if (props.config.type === 'form' && props.config.props.layout === 'inline') {
+        // 为表单内的组件设置兼容的宽度和样式
+        // 如果用户设置了百分比宽度，我们需要确保这个宽度被正确应用到包装器上
+        // 同时组件本身应该占据整个包装器的宽度
+        newComponent.style.width = '100%' // 组件本身宽度设为100%以占满父容器
       }
 
       // 为图表组件添加默认数据
@@ -464,5 +511,50 @@ const getFormItemLabelCol = (props: Record<string, any>) => {
     color: #999;
     font-size: 14px;
   }
+
+  &__inline-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+}
+</style>
+
+<style>
+/* 全局样式，解决Ant Design表单内联布局问题 */
+.inline-form-item.ant-form-item {
+  margin-right: 0;
+  margin-bottom: 0;
+  flex: 1;
+  width: 100%;
+}
+
+.inline-form-item-wrapper {
+  box-sizing: border-box;
+}
+
+.inline-form-item-wrapper .component-renderer {
+  width: 100% !important;
+}
+
+.component-renderer__inline-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+/* 确保内联表单项正确对齐 */
+.inline-form-item.ant-form-item .ant-form-item-label {
+  white-space: nowrap;
+}
+
+.inline-form-item.ant-form-item .ant-form-item-control {
+  flex: 1;
+  width: 100%;
+}
+
+/* 确保内联表单项中的组件占据100%宽度 */
+.inline-form-item-wrapper .component-renderer > * {
+  width: 100%;
 }
 </style>
