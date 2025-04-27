@@ -234,6 +234,25 @@ const handleChildAdded = (event: { newIndex: number; item: HTMLElement }) => {
         newComponent.props.span = 12 // 设置为50%宽度
       }
 
+      // 为图表组件添加默认数据
+      if (child.type === 'barChart' || child.type === 'lineChart') {
+        newComponent.dataSource.data = {
+          categories: ['类别1', '类别2', '类别3', '类别4', '类别5'],
+          series: [
+            {
+              name: '系列1',
+              data: [120, 200, 150, 80, 70],
+              smooth: child.type === 'lineChart',
+            },
+            {
+              name: '系列2',
+              data: [60, 100, 80, 120, 140],
+              smooth: false,
+            },
+          ],
+        }
+      }
+
       // 替换掉原始拖入的组件
       props.config.children.splice(newIndex, 1, newComponent)
       componentStore.setSelectedComponentId(newComponent.id)
@@ -252,7 +271,28 @@ const resolveComponent = (type: string) => {
     button: Button,
     form: Form,
     table: Table,
-    chart: 'div', // 图表组件需要特殊处理
+    barChart: defineAsyncComponent(() =>
+      import('./chart-component.vue').then((comp) => {
+        return {
+          ...comp.default,
+          props: {
+            ...comp.default.props,
+            type: { default: 'bar' },
+          },
+        }
+      }),
+    ),
+    lineChart: defineAsyncComponent(() =>
+      import('./chart-component.vue').then((comp) => {
+        return {
+          ...comp.default,
+          props: {
+            ...comp.default.props,
+            type: { default: 'line' },
+          },
+        }
+      }),
+    ),
     row: Row, // 栅格行组件
     col: Col, // 栅格列组件
   }
@@ -262,13 +302,18 @@ const resolveComponent = (type: string) => {
 
 // 生成组件所需的props
 const componentProps = computed(() => {
-  const { type, props: customProps } = props.config
+  const { type, props: customProps, dataSource } = props.config
   const result = { ...customProps }
 
   // 针对不同组件类型做特殊处理
   if (type === 'button' && result.text) {
     result.children = result.text
     delete result.text
+  }
+
+  // 为图表组件提供数据源
+  if ((type === 'barChart' || type === 'lineChart') && dataSource) {
+    result.dataSource = dataSource
   }
 
   return result

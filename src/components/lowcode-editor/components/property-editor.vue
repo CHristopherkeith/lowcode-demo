@@ -215,42 +215,71 @@ const dataForm = reactive({
 const staticDataJson = ref('')
 
 // 初始化表单数据
+const initFormData = () => {
+  if (!props.component) return
+
+  const { style, dataSource } = props.component
+
+  // 解析样式值
+  if (style) {
+    const { width, height, backgroundColor, border, borderRadius, marginBottom } = style
+
+    const parsedWidth = parseStyleValue(width, 'px')
+    const parsedHeight = parseStyleValue(height, 'px')
+    const parsedMarginBottom = parseStyleValue(marginBottom, 'px')
+
+    styleForm.width = parsedWidth.value
+    styleForm.widthUnit = parsedWidth.unit
+    styleForm.height = parsedHeight.value
+    styleForm.heightUnit = parsedHeight.unit
+    styleForm.backgroundColor = backgroundColor || ''
+    styleForm.border = border || ''
+    styleForm.borderRadius = parseFloat(borderRadius as string) || 0
+    styleForm.marginBottom = parsedMarginBottom.value
+  }
+
+  // 解析数据源配置
+  if (dataSource) {
+    dataForm.type = dataSource.type
+    dataForm.url = dataSource.url
+    dataForm.method = dataSource.method
+    dataForm.refreshInterval = dataSource.refreshInterval
+
+    // 处理静态数据
+    if (dataSource.data) {
+      try {
+        staticDataJson.value = JSON.stringify(dataSource.data, null, 2)
+      } catch (error) {
+        staticDataJson.value = ''
+      }
+    } else if (props.component.type === 'barChart' || props.component.type === 'lineChart') {
+      // 为图表组件提供默认数据
+      const defaultChartData = {
+        categories: ['类别1', '类别2', '类别3', '类别4', '类别5'],
+        series: [
+          {
+            name: '系列1',
+            data: [120, 200, 150, 80, 70],
+          },
+          {
+            name: '系列2',
+            data: [60, 100, 80, 120, 140],
+          },
+        ],
+      }
+      staticDataJson.value = JSON.stringify(defaultChartData, null, 2)
+    } else {
+      staticDataJson.value = ''
+    }
+  }
+}
+
+// 使用watch监听组件变化，初始化表单数据
 watch(
   () => props.component,
   (newVal) => {
     if (newVal) {
-      // 解析宽度
-      const widthData = parseStyleValue(newVal.style.width, 'px')
-      styleForm.width = widthData.value
-      styleForm.widthUnit = widthData.unit
-
-      // 解析高度
-      const heightData = parseStyleValue(newVal.style.height, 'px')
-      styleForm.height = heightData.value
-      styleForm.heightUnit = heightData.unit
-
-      // 其他样式
-      styleForm.backgroundColor = newVal.style.backgroundColor || ''
-      styleForm.border = newVal.style.border || ''
-      styleForm.borderRadius = parseFloat(newVal.style.borderRadius || '0')
-      styleForm.marginBottom = parseFloat(newVal.style.marginBottom || '10')
-
-      // 数据源
-      dataForm.type = newVal.dataSource?.type || 'static'
-      dataForm.url = newVal.dataSource?.url || ''
-      dataForm.method = newVal.dataSource?.method || 'GET'
-      dataForm.refreshInterval = newVal.dataSource?.refreshInterval || 0
-
-      // 静态数据
-      if (newVal.dataSource?.data) {
-        try {
-          staticDataJson.value = JSON.stringify(newVal.dataSource.data, null, 2)
-        } catch {
-          staticDataJson.value = ''
-        }
-      } else {
-        staticDataJson.value = ''
-      }
+      initFormData()
     }
   },
   { immediate: true, deep: true },

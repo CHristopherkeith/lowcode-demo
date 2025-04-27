@@ -182,6 +182,25 @@ const handleComponentAdded = (event: { newIndex: number; item: HTMLElement }) =>
           }
         }
       }
+
+      // 为图表组件添加默认数据
+      if (component.type === 'barChart' || component.type === 'lineChart') {
+        newComponent.dataSource.data = {
+          categories: ['类别1', '类别2', '类别3', '类别4', '类别5'],
+          series: [
+            {
+              name: '系列1',
+              data: [120, 200, 150, 80, 70],
+              smooth: component.type === 'lineChart',
+            },
+            {
+              name: '系列2',
+              data: [60, 100, 80, 120, 140],
+              smooth: false,
+            },
+          ],
+        }
+      }
     }
   }
 }

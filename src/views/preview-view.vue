@@ -26,7 +26,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, defineAsyncComponent } from 'vue'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import type { PageConfig } from '@/types/lowcode'
@@ -58,7 +58,24 @@ const resolveComponent = (type: string) => {
     button: Button,
     form: Form,
     table: Table,
-    chart: 'div', // 图表组件需要特殊处理
+    barChart: defineAsyncComponent(() =>
+      import('../components/lowcode-editor/components/chart-component.vue').then((comp) => ({
+        ...comp.default,
+        props: {
+          ...comp.default.props,
+          type: { default: 'bar' },
+        },
+      })),
+    ),
+    lineChart: defineAsyncComponent(() =>
+      import('../components/lowcode-editor/components/chart-component.vue').then((comp) => ({
+        ...comp.default,
+        props: {
+          ...comp.default.props,
+          type: { default: 'line' },
+        },
+      })),
+    ),
   }
 
   return componentMap[type] || 'div'

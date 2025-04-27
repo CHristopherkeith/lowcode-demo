@@ -288,25 +288,31 @@ export const advancedComponents: ComponentDefinition[] = [
     ],
   },
   {
-    type: 'chart',
-    name: '图表',
+    type: 'barChart',
+    name: '柱状图',
     icon: 'bar-chart',
     defaultProps: {
-      chartType: 'bar',
       height: 400,
       legendVisible: true,
+      title: '柱状图标题',
+      xAxisData: ['类别1', '类别2', '类别3', '类别4', '类别5'],
+      seriesData: [
+        {
+          name: '系列1',
+          data: [120, 200, 150, 80, 70],
+        },
+        {
+          name: '系列2',
+          data: [60, 100, 80, 120, 140],
+        },
+      ],
     },
     propConfig: [
       {
-        name: 'chartType',
-        label: '图表类型',
-        type: 'select',
-        defaultValue: 'bar',
-        options: [
-          { label: '柱状图', value: 'bar' },
-          { label: '折线图', value: 'line' },
-          { label: '饼图', value: 'pie' },
-        ],
+        name: 'title',
+        label: '图表标题',
+        type: 'string',
+        defaultValue: '柱状图标题',
       },
       {
         name: 'height',
@@ -319,6 +325,93 @@ export const advancedComponents: ComponentDefinition[] = [
         label: '显示图例',
         type: 'boolean',
         defaultValue: true,
+      },
+      {
+        name: 'xAxisData',
+        label: 'X轴数据',
+        type: 'select',
+        defaultValue: ['类别1', '类别2', '类别3', '类别4', '类别5'],
+      },
+      {
+        name: 'seriesData',
+        label: '系列数据',
+        type: 'select',
+        defaultValue: [
+          {
+            name: '系列1',
+            data: [120, 200, 150, 80, 70],
+          },
+          {
+            name: '系列2',
+            data: [60, 100, 80, 120, 140],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    type: 'lineChart',
+    name: '折线图',
+    icon: 'line-chart',
+    defaultProps: {
+      height: 400,
+      legendVisible: true,
+      title: '折线图标题',
+      xAxisData: ['类别1', '类别2', '类别3', '类别4', '类别5'],
+      seriesData: [
+        {
+          name: '系列1',
+          data: [120, 132, 101, 134, 90],
+          smooth: true,
+        },
+        {
+          name: '系列2',
+          data: [220, 182, 191, 234, 290],
+          smooth: false,
+        },
+      ],
+    },
+    propConfig: [
+      {
+        name: 'title',
+        label: '图表标题',
+        type: 'string',
+        defaultValue: '折线图标题',
+      },
+      {
+        name: 'height',
+        label: '图表高度',
+        type: 'number',
+        defaultValue: 400,
+      },
+      {
+        name: 'legendVisible',
+        label: '显示图例',
+        type: 'boolean',
+        defaultValue: true,
+      },
+      {
+        name: 'xAxisData',
+        label: 'X轴数据',
+        type: 'select',
+        defaultValue: ['类别1', '类别2', '类别3', '类别4', '类别5'],
+      },
+      {
+        name: 'seriesData',
+        label: '系列数据',
+        type: 'select',
+        defaultValue: [
+          {
+            name: '系列1',
+            data: [120, 132, 101, 134, 90],
+            smooth: true,
+          },
+          {
+            name: '系列2',
+            data: [220, 182, 191, 234, 290],
+            smooth: false,
+          },
+        ],
       },
     ],
   },
