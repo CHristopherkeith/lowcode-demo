@@ -201,6 +201,28 @@ const handleComponentAdded = (event: { newIndex: number; item: HTMLElement }) =>
           ],
         }
       }
+
+      // 为表格组件添加默认数据
+      if (component.type === 'table') {
+        // 定义默认表格数据
+        const columns = newComponent.props.columns as Array<{
+          title: string
+          dataIndex: string
+          key: string
+        }>
+        const dataSource = []
+
+        // 根据列生成示例数据
+        for (let i = 1; i <= 5; i++) {
+          const row: Record<string, unknown> = { key: i.toString() }
+          columns.forEach((column) => {
+            row[column.dataIndex] = `${column.title}${i}`
+          })
+          dataSource.push(row)
+        }
+
+        newComponent.dataSource.data = dataSource
+      }
     }
   }
 }

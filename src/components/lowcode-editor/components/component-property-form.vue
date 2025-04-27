@@ -23,7 +23,10 @@
           </a-form-item>
 
           <!-- 选择类型 -->
-          <a-form-item :label="config.label" v-else-if="config.type === 'select'">
+          <a-form-item
+            :label="config.label"
+            v-else-if="config.type === 'select' && config.name !== 'columns'"
+          >
             <a-select
               v-model:value="propValues[config.name]"
               style="width: 100%"
@@ -37,6 +40,17 @@
                 {{ option.label }}
               </a-select-option>
             </a-select>
+          </a-form-item>
+
+          <!-- 表格列配置 -->
+          <a-form-item
+            :label="config.label"
+            v-else-if="config.type === 'select' && config.name === 'columns'"
+          >
+            <table-columns-editor
+              v-model:value="propValues[config.name]"
+              @update:value="handlePropChange"
+            />
           </a-form-item>
 
           <!-- 颜色类型 -->
@@ -67,6 +81,7 @@ import {
   advancedComponents,
   containerComponents,
 } from '../config/component-config'
+import TableColumnsEditor from './table-columns-editor.vue'
 
 const props = defineProps<{
   component: Component

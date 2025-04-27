@@ -12,7 +12,7 @@
           class="component-container"
         >
           <div class="component-wrapper" :style="component.style">
-            <component :is="resolveComponent(component.type)" v-bind="component.props" />
+            <component :is="resolveComponent(component.type)" v-bind="resolveProps(component)" />
           </div>
         </div>
       </template>
@@ -79,6 +79,30 @@ const resolveComponent = (type: string) => {
   }
 
   return componentMap[type] || 'div'
+}
+
+// 处理组件属性
+const resolveProps = (component: Component) => {
+  const { type, props, dataSource } = component
+  const result = { ...props }
+
+  // 处理按钮组件
+  if (type === 'button' && result.text) {
+    result.children = result.text
+    delete result.text
+  }
+
+  // 为图表组件提供数据源
+  if ((type === 'barChart' || type === 'lineChart') && dataSource) {
+    result.dataSource = dataSource
+  }
+
+  // 为表格组件提供数据源
+  if (type === 'table' && dataSource && dataSource.data) {
+    result.dataSource = dataSource.data
+  }
+
+  return result
 }
 
 // 加载页面配置

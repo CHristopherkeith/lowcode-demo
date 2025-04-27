@@ -253,6 +253,28 @@ const handleChildAdded = (event: { newIndex: number; item: HTMLElement }) => {
         }
       }
 
+      // 为表格组件添加默认数据
+      if (child.type === 'table') {
+        // 定义默认表格数据
+        const columns = newComponent.props.columns as Array<{
+          title: string
+          dataIndex: string
+          key: string
+        }>
+        const dataSource = []
+
+        // 根据列生成示例数据
+        for (let i = 1; i <= 5; i++) {
+          const row: Record<string, unknown> = { key: i.toString() }
+          columns.forEach((column) => {
+            row[column.dataIndex] = `${column.title}${i}`
+          })
+          dataSource.push(row)
+        }
+
+        newComponent.dataSource.data = dataSource
+      }
+
       // 替换掉原始拖入的组件
       props.config.children.splice(newIndex, 1, newComponent)
       componentStore.setSelectedComponentId(newComponent.id)
@@ -314,6 +336,11 @@ const componentProps = computed(() => {
   // 为图表组件提供数据源
   if ((type === 'barChart' || type === 'lineChart') && dataSource) {
     result.dataSource = dataSource
+  }
+
+  // 为表格组件提供数据源
+  if (type === 'table' && dataSource && dataSource.data) {
+    result.dataSource = dataSource.data
   }
 
   return result

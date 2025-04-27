@@ -249,7 +249,7 @@ const initFormData = () => {
     if (dataSource.data) {
       try {
         staticDataJson.value = JSON.stringify(dataSource.data, null, 2)
-      } catch (error) {
+      } catch {
         staticDataJson.value = ''
       }
     } else if (props.component.type === 'barChart' || props.component.type === 'lineChart') {
@@ -268,6 +268,27 @@ const initFormData = () => {
         ],
       }
       staticDataJson.value = JSON.stringify(defaultChartData, null, 2)
+    } else if (props.component.type === 'table') {
+      // 为表格组件提供默认数据
+      const columns = props.component.props.columns as Array<{
+        title: string
+        dataIndex: string
+        key: string
+      }>
+      if (columns && columns.length > 0) {
+        const defaultTableData = []
+        // 根据列生成示例数据
+        for (let i = 1; i <= 5; i++) {
+          const row: Record<string, unknown> = { key: i.toString() }
+          columns.forEach((column) => {
+            row[column.dataIndex] = `${column.title}${i}`
+          })
+          defaultTableData.push(row)
+        }
+        staticDataJson.value = JSON.stringify(defaultTableData, null, 2)
+      } else {
+        staticDataJson.value = '[]'
+      }
     } else {
       staticDataJson.value = ''
     }
