@@ -354,9 +354,18 @@ const handleStaticDataUpdate = () => {
       }
     }
 
-    updatedComponent.dataSource = {
-      ...updatedComponent.dataSource,
-      data,
+    // 为图表组件特殊处理，确保创建新的对象引用
+    if (props.component.type === 'barChart' || props.component.type === 'lineChart') {
+      updatedComponent.dataSource = {
+        ...updatedComponent.dataSource,
+        data: JSON.parse(JSON.stringify(data)), // 创建全新的数据引用
+      }
+      console.log('图表组件数据更新:', updatedComponent.dataSource.data)
+    } else {
+      updatedComponent.dataSource = {
+        ...updatedComponent.dataSource,
+        data,
+      }
     }
 
     console.log('更新后的组件数据源:', updatedComponent.dataSource)

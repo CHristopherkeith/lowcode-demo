@@ -72,8 +72,22 @@ onMounted(() => {
 
 // 监听数据源变化
 watch(
-  () => [props.dataSource?.data, props.xAxisData, props.seriesData],
+  () => props.dataSource?.data,
+  (newData, oldData) => {
+    console.log('图表dataSource.data发生变化', newData)
+    if (newData !== oldData) {
+      console.log('更新图表数据')
+      chartData.value = getDataFromSource()
+    }
+  },
+  { deep: true, immediate: true },
+)
+
+// 监听其他属性变化
+watch(
+  () => [props.xAxisData, props.seriesData, props.title, props.height, props.legendVisible],
   () => {
+    console.log('图表其他属性发生变化')
     chartData.value = getDataFromSource()
   },
   { deep: true },

@@ -485,7 +485,11 @@ const componentProps = computed(() => {
       typeof props.config.dataSource === 'object' &&
       'data' in props.config.dataSource
     ) {
-      propValues.dataSource = props.config.dataSource.data
+      // 创建新的数据引用以确保变化能被检测到
+      propValues.dataSource = {
+        type: props.config.dataSource.type,
+        data: JSON.parse(JSON.stringify(props.config.dataSource.data)),
+      }
     }
   }
 
