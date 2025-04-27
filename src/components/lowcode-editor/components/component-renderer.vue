@@ -1,6 +1,6 @@
 <template>
   <div
-    :class="['component-renderer', { 'component-renderer--selected': isSelected }]"
+    :class="['component-renderer', { 'component-renderer--selected': isSelected && isEditor }]"
     :style="wrapperStylesObj"
     @click.stop="handleClick"
   >

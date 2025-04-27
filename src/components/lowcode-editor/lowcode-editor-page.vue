@@ -316,6 +316,11 @@ const loadConfig = () => {
       // 更新组件存储中的组件
       componentStore.components = pageConfig.components
 
+      // 如果有组件且当前没有选中任何组件，自动选择第一个组件
+      if (pageConfig.components.length > 0 && !componentStore.selectedComponentId) {
+        componentStore.setSelectedComponentId(pageConfig.components[0].id)
+      }
+
       console.log('===== 页面配置加载完成 =====')
     } catch (error) {
       console.error('解析页面配置出错:', error)

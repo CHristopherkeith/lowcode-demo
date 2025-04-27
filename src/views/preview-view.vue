@@ -31,8 +31,10 @@ import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import type { PageConfig } from '@/types/lowcode'
 import ComponentRenderer from '../components/lowcode-editor/components/component-renderer.vue'
+import { useComponentStore } from '@/stores/component'
 
 const router = useRouter()
+const componentStore = useComponentStore()
 
 // 默认页面配置
 const defaultPageConfig: PageConfig = {
@@ -49,10 +51,16 @@ const pageConfig = ref<PageConfig>(defaultPageConfig)
 
 // 加载页面配置
 onMounted(() => {
+  // 重置组件选中状态
+  componentStore.setSelectedComponentId(null)
+
   const configJson = localStorage.getItem('lowcodePageConfig')
   if (configJson) {
     try {
       pageConfig.value = JSON.parse(configJson)
+
+      // 更新组件存储，但不选中任何组件
+      componentStore.components = pageConfig.value.components || []
     } catch (error: unknown) {
       console.error('解析页面配置失败:', error)
       message.error('页面配置解析失败')
