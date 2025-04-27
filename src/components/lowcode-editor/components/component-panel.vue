@@ -31,7 +31,15 @@
         </a-space>
       </a-collapse-panel> -->
 
-      <a-collapse-panel key="basic" header="基础表单组件">
+      <a-collapse-panel key="basic">
+        <template #header>
+          <div class="panel-header">
+            <span>基础表单组件</span>
+            <a-tooltip placement="right" title="基础表单组件须放置在表单组件内">
+              <question-circle-outlined style="margin-left: 8px; color: #999" />
+            </a-tooltip>
+          </div>
+        </template>
         <a-space direction="vertical" style="width: 100%">
           <VueDraggable
             v-model="basicComponentsData"
@@ -89,10 +97,11 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { VueDraggable } from 'vue-draggable-plus'
+import { QuestionCircleOutlined } from '@ant-design/icons-vue'
 import {
   basicComponents,
   advancedComponents,
-  containerComponents,
+  // containerComponents,  // 暂时未使用
 } from '../config/component-config'
 import type { ComponentDefinition } from '@/types/lowcode'
 
@@ -105,7 +114,8 @@ defineOptions({
 const activeCollapseKeys = ref(['container', 'basic', 'advanced'])
 
 // 创建响应式数据以满足v-model需求
-const containerComponentsData = ref([...containerComponents])
+// 注释掉暂时未使用的数据以避免警告
+// const containerComponentsData = ref([...containerComponents])
 const basicComponentsData = ref([...basicComponents])
 const advancedComponentsData = ref([...advancedComponents])
 
@@ -143,6 +153,20 @@ const cloneComponent = (component: ComponentDefinition): ComponentDefinition => 
     display: flex;
     justify-content: space-between;
     align-items: center;
+  }
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+
+  .anticon {
+    cursor: help;
+    transition: color 0.3s;
+
+    &:hover {
+      color: #1890ff !important;
+    }
   }
 }
 
