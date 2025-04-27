@@ -217,8 +217,8 @@ const apiRefreshTimers = ref<Record<string, number | null>>({})
 
 // 组件挂载时处理API数据源
 onMounted(() => {
-  // 仅当组件不在编辑器中时才加载API数据
-  if (!props.isEditor && props.config.dataSource?.type === 'api' && props.config.dataSource.url) {
+  // 不再限制只在预览模式下加载API数据，编辑器中也可以加载
+  if (props.config.dataSource?.type === 'api' && props.config.dataSource.url) {
     loadApiData()
   }
 })
@@ -277,11 +277,11 @@ const loadApiData = () => {
   fetchApiData(props.config.type, updatedDataSource, (data) => {
     console.log(`[${props.config.type}] API数据加载成功:`, data)
 
-    // 更新组件的数据源数据
-    const updatedComponent = { ...props.config }
+    // 更新组件的数据源数据（使用深拷贝确保引用变化）
+    const updatedComponent = JSON.parse(JSON.stringify(props.config))
     updatedComponent.dataSource = {
       ...updatedComponent.dataSource,
-      data,
+      data: JSON.parse(JSON.stringify(data)), // 创建全新的数据引用
     }
 
     // 更新组件
@@ -295,11 +295,11 @@ const loadApiData = () => {
       props.config.type,
       updatedDataSource,
       (data) => {
-        // 更新组件的数据源数据
-        const updatedComponent = { ...props.config }
+        // 更新组件的数据源数据（使用深拷贝确保引用变化）
+        const updatedComponent = JSON.parse(JSON.stringify(props.config))
         updatedComponent.dataSource = {
           ...updatedComponent.dataSource,
-          data,
+          data: JSON.parse(JSON.stringify(data)), // 创建全新的数据引用
         }
 
         // 更新组件
@@ -323,11 +323,10 @@ watch(
     props.config.dataSource?.type,
     props.config.dataSource?.url,
     props.config.dataSource?.refreshInterval,
-    props.isEditor, // 也监听编辑器状态变化
   ],
-  ([newType, newUrl, newInterval, isEditor], [oldType, oldUrl, oldInterval]) => {
-    // 仅在预览模式下且数据源为API类型时加载API数据
-    if (!isEditor && newType === 'api' && newUrl) {
+  ([newType, newUrl, newInterval], [oldType, oldUrl, oldInterval]) => {
+    // 无论是否在编辑器模式下，都允许加载API数据
+    if (newType === 'api' && newUrl) {
       const configChanged = newType !== oldType || newUrl !== oldUrl || newInterval !== oldInterval
 
       if (configChanged) {

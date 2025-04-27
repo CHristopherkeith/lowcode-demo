@@ -33,8 +33,9 @@ interface Props {
     type: 'static' | 'api'
     data: ChartData | null
     url: string
-    method: string
+    method: 'GET' | 'POST' | 'PUT' | 'DELETE'
     refreshInterval: number
+    params?: Record<string, unknown>
   }
 }
 
@@ -75,7 +76,7 @@ onMounted(() => {
   setTimeout(() => {
     chartData.value = getDataFromSource()
 
-    // 检查是否需要加载API数据
+    // 检查是否需要加载API数据，无论是否在编辑器模式中
     if (props.dataSource?.type === 'api' && props.dataSource.url) {
       loadApiData()
     }
@@ -95,15 +96,22 @@ const loadApiData = () => {
     // 清除之前的定时器
     clearRefreshTimer(refreshTimer.value)
 
+    // 为数据源添加默认的params属性，确保API调用不会出错
+    const dataSourceWithParams = {
+      ...props.dataSource,
+      params: props.dataSource.params || {},
+    }
+
     // 获取API数据
-    fetchApiData(props.type + 'Chart', props.dataSource, (data) => {
+    fetchApiData(props.type + 'Chart', dataSourceWithParams, (data) => {
       console.log(`[${props.type}图表] API数据加载成功:`, data)
 
       // 更新图表数据
       if (data && data.categories && data.series) {
+        // 使用深拷贝确保引用变化
         chartData.value = {
-          categories: data.categories,
-          series: data.series,
+          categories: JSON.parse(JSON.stringify(data.categories)),
+          series: JSON.parse(JSON.stringify(data.series)),
         }
       }
     })
@@ -113,12 +121,13 @@ const loadApiData = () => {
       refreshTimer.value = setupRefreshTimer(
         'chart-' + Date.now(),
         props.type + 'Chart',
-        props.dataSource,
+        dataSourceWithParams,
         (data) => {
           if (data && data.categories && data.series) {
+            // 使用深拷贝确保引用变化
             chartData.value = {
-              categories: data.categories,
-              series: data.series,
+              categories: JSON.parse(JSON.stringify(data.categories)),
+              series: JSON.parse(JSON.stringify(data.series)),
             }
           }
         },
