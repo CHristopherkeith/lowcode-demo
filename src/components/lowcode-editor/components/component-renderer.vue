@@ -201,7 +201,7 @@ const componentStore = useComponentStore()
 const isSelected = computed(() => componentStore.selectedComponentId === props.config.id)
 
 // 验证函数：只允许拖入列容器
-const validateColOnly = (to: unknown, from: unknown, dragEl: HTMLElement, event: unknown) => {
+const validateColOnly = (to: unknown, from: unknown, dragEl: HTMLElement) => {
   // 获取被拖拽元素的组件类型
   const draggedType = dragEl.getAttribute('data-type')
   // 只允许col类型组件
@@ -209,7 +209,7 @@ const validateColOnly = (to: unknown, from: unknown, dragEl: HTMLElement, event:
 }
 
 // 验证函数：不允许拖入行容器
-const validateNotRow = (to: unknown, from: unknown, dragEl: HTMLElement, event: unknown) => {
+const validateNotRow = (to: unknown, from: unknown, dragEl: HTMLElement) => {
   // 获取被拖拽元素的组件类型
   const draggedType = dragEl.getAttribute('data-type')
   // 不允许row类型组件
@@ -217,7 +217,7 @@ const validateNotRow = (to: unknown, from: unknown, dragEl: HTMLElement, event: 
 }
 
 // 验证函数：表单组件只能放置基础表单组件
-const validateFormChildren = (to: unknown, from: unknown, dragEl: HTMLElement, event: unknown) => {
+const validateFormChildren = (to: unknown, from: unknown, dragEl: HTMLElement) => {
   // 获取被拖拽元素的组件类型
   const draggedType = dragEl.getAttribute('data-type')
 

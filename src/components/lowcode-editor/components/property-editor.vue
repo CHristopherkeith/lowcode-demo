@@ -99,7 +99,7 @@
         <component-property-form :component="component" @update="handleUpdateProps" />
       </a-tab-pane>
 
-      <a-tab-pane key="data" tab="数据绑定">
+      <a-tab-pane key="data" tab="数据绑定" v-if="isAdvancedComponent">
         <a-form layout="vertical">
           <a-form-item label="数据源类型">
             <a-radio-group v-model:value="dataForm.type">
@@ -158,9 +158,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch } from 'vue'
+import { ref, reactive, watch, computed } from 'vue'
 import type { Component } from '@/types/lowcode'
 import ComponentPropertyForm from './component-property-form.vue'
+import { advancedComponents } from '../config/component-config'
 
 const props = defineProps<{
   component: Component
@@ -172,6 +173,23 @@ const emit = defineEmits<{
 
 const activeTabKey = ref('basic')
 const basicActiveKeys = ref(['style'])
+
+// 判断当前组件是否为高级组件
+const isAdvancedComponent = computed(() => {
+  const advancedComponentTypes = advancedComponents.map((comp) => comp.type)
+  return advancedComponentTypes.includes(props.component.type)
+})
+
+// 初始化时如果不是高级组件但选中了数据绑定标签，切换到基本属性标签
+watch(
+  () => isAdvancedComponent.value,
+  (isAdvanced) => {
+    if (!isAdvanced && activeTabKey.value === 'data') {
+      activeTabKey.value = 'basic'
+    }
+  },
+  { immediate: true },
+)
 
 // 解析样式数据
 const parseStyleValue = (

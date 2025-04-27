@@ -61,7 +61,6 @@ import PropertyEditor from './components/property-editor.vue'
 import ComponentPanel from './components/component-panel.vue'
 import ComponentRenderer from './components/component-renderer.vue'
 import type { PageConfig, Component } from '@/types/lowcode.d'
-import { Row, Col } from 'ant-design-vue'
 import { useComponentStore } from '@/stores/component'
 import { basicComponents, advancedComponents, containerComponents } from './config/component-config'
 
@@ -104,7 +103,7 @@ const pageConfig = reactive<PageConfig>({
 })
 
 // 验证函数：不允许将Col直接拖到顶层，基础表单组件只能放在表单组件内
-const validateMainDrop = (to: unknown, from: unknown, dragEl: HTMLElement, event: unknown) => {
+const validateMainDrop = (to: unknown, from: unknown, dragEl: HTMLElement) => {
   // 获取被拖拽元素的组件类型
   const draggedType = dragEl.getAttribute('data-type')
 
