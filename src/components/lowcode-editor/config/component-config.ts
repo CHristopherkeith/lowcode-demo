@@ -283,7 +283,7 @@ export const advancedComponents: ComponentDefinition[] = [
     icon: 'form',
     defaultProps: {
       labelColType: 'span',
-      labelColValue: 6,
+      labelColValue: 3,
       layout: 'horizontal',
     },
     propConfig: [
@@ -301,7 +301,7 @@ export const advancedComponents: ComponentDefinition[] = [
         name: 'labelColValue',
         label: '标签列宽值',
         type: 'number',
-        defaultValue: 6,
+        defaultValue: 3,
       },
       {
         name: 'layout',
