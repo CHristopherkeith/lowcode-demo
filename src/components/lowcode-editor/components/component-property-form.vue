@@ -115,6 +115,29 @@ watch(
       Object.keys(newVal.props).forEach((key) => {
         propValues[key] = newVal.props[key]
       })
+
+      // 特殊处理表单的labelCol属性，转换为labelColType和labelColValue
+      if (newVal.type === 'form' && newVal.props.labelCol) {
+        const labelCol = newVal.props.labelCol as {
+          span?: number
+          style?: { width?: string }
+        }
+
+        // 处理span方式
+        if (labelCol.span !== undefined) {
+          propValues.labelColType = 'span'
+          propValues.labelColValue = labelCol.span
+        }
+        // 处理px方式
+        else if (labelCol.style && labelCol.style.width) {
+          const widthStr = labelCol.style.width
+          const pxMatch = widthStr.match(/(\d+)px/)
+          if (pxMatch) {
+            propValues.labelColType = 'px'
+            propValues.labelColValue = parseInt(pxMatch[1])
+          }
+        }
+      }
     }
   },
   { immediate: true, deep: true },
@@ -122,6 +145,19 @@ watch(
 
 // 处理属性变更
 const handlePropChange = () => {
+  // 特殊处理表单的labelCol属性
+  if (props.component.type === 'form') {
+    // 确保使用默认值
+    const type = propValues.labelColType !== undefined ? propValues.labelColType : 'span'
+    const value = propValues.labelColValue !== undefined ? propValues.labelColValue : 6
+
+    if (type === 'span') {
+      propValues.labelCol = { span: value }
+    } else if (type === 'px') {
+      propValues.labelCol = { style: { width: `${value}px` } }
+    }
+  }
+
   emit('update', { ...propValues })
 }
 </script>

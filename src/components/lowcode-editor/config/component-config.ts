@@ -282,22 +282,26 @@ export const advancedComponents: ComponentDefinition[] = [
     name: '表单',
     icon: 'form',
     defaultProps: {
-      labelCol: { span: 6 },
-      wrapperCol: { span: 18 },
+      labelColType: 'span',
+      labelColValue: 6,
       layout: 'horizontal',
     },
     propConfig: [
       {
-        name: 'labelCol',
-        label: '标签列宽',
-        type: 'number',
-        defaultValue: 6,
+        name: 'labelColType',
+        label: '标签列宽类型',
+        type: 'select',
+        defaultValue: 'span',
+        options: [
+          { label: '栅格比例', value: 'span' },
+          { label: '固定像素', value: 'px' },
+        ],
       },
       {
-        name: 'wrapperCol',
-        label: '控件列宽',
+        name: 'labelColValue',
+        label: '标签列宽值',
         type: 'number',
-        defaultValue: 18,
+        defaultValue: 6,
       },
       {
         name: 'layout',

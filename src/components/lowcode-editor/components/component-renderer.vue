@@ -74,8 +74,7 @@
             <a-form-item
               v-if="child.props && child.props.label"
               :label="child.props.label"
-              :label-col="config.props.labelCol"
-              :wrapper-col="config.props.wrapperCol"
+              :label-col="getFormItemLabelCol(config.props)"
             >
               <component-renderer
                 :config="child"
@@ -347,6 +346,19 @@ const componentProps = computed(() => {
     delete result.text
   }
 
+  // 处理表单的labelCol格式
+  if (type === 'form' && result.labelColType && result.labelColValue) {
+    // 根据类型生成不同格式的labelCol
+    if (result.labelColType === 'span') {
+      result.labelCol = { span: result.labelColValue }
+    } else if (result.labelColType === 'px') {
+      result.labelCol = { style: { width: `${result.labelColValue}px` } }
+    }
+    // 删除辅助属性
+    delete result.labelColType
+    delete result.labelColValue
+  }
+
   // 为图表组件提供数据源
   if ((type === 'barChart' || type === 'lineChart') && dataSource) {
     result.dataSource = dataSource
@@ -389,6 +401,25 @@ const wrapperStylesObj = computed<CSSProperties>(() => {
 
   return baseStyle
 })
+
+// 获取表单项的labelCol
+const getFormItemLabelCol = (props: Record<string, any>) => {
+  if (!props) return {}
+
+  // 如果已经有labelCol属性（可能是由componentProps计算生成的）
+  if (props.labelCol) {
+    return props.labelCol
+  }
+
+  // 处理labelColType和labelColValue
+  if (props.labelColType === 'span') {
+    return { span: props.labelColValue }
+  } else if (props.labelColType === 'px') {
+    return { style: { width: `${props.labelColValue}px` } }
+  }
+
+  return {}
+}
 </script>
 
 <style lang="scss" scoped>
