@@ -111,65 +111,40 @@ export const useComponentStore = defineStore('component', () => {
 
     // 递归处理组件
     const processComponent = (comp: Component) => {
+      console.log('[debug comp]', comp)
       console.log('处理组件:', comp.type, '字段名:', comp.fieldName || '无', 'ID:', comp.id)
 
       // 如果组件有字段名称，收集其值
-      if (comp.fieldName) {
+      if (comp.props.fieldName) {
         // 根据组件类型获取值
         let value = null
 
         // 打印组件的完整props内容，用于调试
         console.log(`组件 ${comp.type} 的完整props:`, comp.props)
 
-        // 不同组件类型的值获取方式可能不同
-        if (comp.type === 'input') {
-          // 对于输入框，我们可以尝试获取多种值
-          value = comp.props.value || comp.props.defaultValue || ''
-          console.log(`  表单字段 ${comp.fieldName} 值(input):`, value)
-
-          // 模拟输入值 - 在实际应用中，这里应该从DOM获取值
-          value = comp.props.defaultValue || '默认输入值'
-        } else if (comp.type === 'datePicker') {
-          value = comp.props.value || comp.props.defaultValue || ''
-          console.log(`  表单字段 ${comp.fieldName} 值(datePicker):`, value)
-
-          // 模拟日期值
-          value = comp.props.defaultValue || '2023-01-01'
-        } else if (comp.type === 'select') {
-          value = comp.props.value || comp.props.defaultValue || ''
-          console.log(`  表单字段 ${comp.fieldName} 值(select):`, value)
-
-          // 模拟选择值 - 从options中获取第一个值
-          const options = (comp.props.options as Array<{ label: string; value: unknown }>) || []
-          if (options.length > 0) {
-            value = options[0].value
-          }
-        } else if (comp.type === 'radio') {
-          value = comp.props.value || comp.props.defaultValue || ''
-          console.log(`  表单字段 ${comp.fieldName} 值(radio):`, value)
-
-          // 模拟单选值 - 从options中获取第一个值
-          const options = (comp.props.options as Array<{ label: string; value: unknown }>) || []
-          if (options.length > 0) {
-            value = options[0].value
-          }
-        } else if (comp.type === 'checkbox') {
-          value = comp.props.value || comp.props.defaultValue || []
-          console.log(`  表单字段 ${comp.fieldName} 值(checkbox):`, value)
-
-          // 模拟复选框值 - 选中所有选项
-          const options = (comp.props.options as Array<{ label: string; value: unknown }>) || []
-          if (options.length > 0) {
-            value = options.map((option) => option.value)
-          }
-        } else {
-          // 默认取value属性
-          value = comp.props.value || comp.props.defaultValue
-          console.log(`  表单字段 ${comp.fieldName} 值(默认):`, value)
+        // 获取组件值的映射表
+        const componentValueMap: Record<string, { defaultValue: unknown; logName: string }> = {
+          input: { defaultValue: '', logName: 'input' },
+          datePicker: { defaultValue: '', logName: 'datePicker' },
+          select: { defaultValue: '', logName: 'select' },
+          radio: { defaultValue: '', logName: 'radio' },
+          checkbox: { defaultValue: [], logName: 'checkbox' },
         }
 
+        // 获取组件类型的配置，如果没有则使用默认配置
+        const componentConfig = componentValueMap[comp.type] || {
+          defaultValue: null,
+          logName: '默认',
+        }
+
+        // 统一获取值逻辑
+        value = comp.props.value || comp.props.defaultValue || componentConfig.defaultValue
+
+        // 记录日志
+        console.log(`  表单字段 ${comp.fieldName} 值(${componentConfig.logName}):`, value)
+
         // 保存值到表单数据对象
-        formData[comp.fieldName] = value
+        formData[comp.props.fieldName] = value
       }
 
       // 递归处理子组件

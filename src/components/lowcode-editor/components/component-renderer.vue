@@ -11,7 +11,13 @@
       }}</a-button>
     </template>
     <!-- 其他组件正常处理 -->
-    <component v-else :is="resolveComponent(config.type)" v-bind="componentProps">
+    <component
+      v-else
+      :is="resolveComponent(config.type)"
+      v-bind="componentProps"
+      v-model:value="config.props.value"
+      @change="handleInputChange"
+    >
       <!-- 特殊处理栅格行容器，只允许拖入列容器 -->
       <template v-if="config.type === 'row'">
         <!-- item-key="id"
@@ -635,6 +641,20 @@ const submitFormData = (url: string, data: Record<string, unknown>, method: stri
     console.log('API调用完成，服务器返回成功')
     message.success('表单数据保存成功')
   }, 1000)
+}
+
+// 处理输入变化事件
+const handleInputChange = (value: unknown) => {
+  if (props.config.fieldName && props.config.type !== 'button') {
+    console.log(`组件 ${props.config.type}(${props.config.id}) 值变化:`, value)
+    // 通过store更新组件，避免直接修改props
+    const component = componentStore.components.find((c) => c.id === props.config.id)
+    if (component) {
+      const updatedComponent = JSON.parse(JSON.stringify(component)) as Component
+      updatedComponent.props = { ...updatedComponent.props, value }
+      componentStore.updateComponent(updatedComponent)
+    }
+  }
 }
 </script>
 
