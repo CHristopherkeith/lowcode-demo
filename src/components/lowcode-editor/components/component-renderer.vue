@@ -70,14 +70,28 @@
           class="component-renderer__dropable-area"
           @add="handleChildAdded"
         >
-          <component-renderer
-            v-for="child in config.children"
-            :key="child.id"
-            :config="child"
-            :is-editor="isEditor"
-            @select="handleSelectChild"
-            @delete="handleDeleteChild"
-          />
+          <template v-for="child in config.children" :key="child.id">
+            <a-form-item
+              v-if="child.props && child.props.label"
+              :label="child.props.label"
+              :label-col="config.props.labelCol"
+              :wrapper-col="config.props.wrapperCol"
+            >
+              <component-renderer
+                :config="child"
+                :is-editor="isEditor"
+                @select="handleSelectChild"
+                @delete="handleDeleteChild"
+              />
+            </a-form-item>
+            <component-renderer
+              v-else
+              :config="child"
+              :is-editor="isEditor"
+              @select="handleSelectChild"
+              @delete="handleDeleteChild"
+            />
+          </template>
           <template #header>
             <div v-if="config.children.length === 0" class="component-renderer__empty-tip">
               只能拖入基础表单组件
