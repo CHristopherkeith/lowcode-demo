@@ -281,7 +281,10 @@ const initFormData = () => {
         for (let i = 1; i <= 5; i++) {
           const row: Record<string, unknown> = { key: i.toString() }
           columns.forEach((column) => {
-            row[column.dataIndex] = `${column.title}${i}`
+            // 跳过操作列
+            if (column.dataIndex !== 'action') {
+              row[column.dataIndex] = `${column.title}${i}`
+            }
           })
           defaultTableData.push(row)
         }
@@ -361,6 +364,35 @@ const handleStaticDataUpdate = () => {
     updatedComponent.dataSource = {
       ...updatedComponent.dataSource,
       data,
+    }
+
+    // 如果是表格组件，需要额外处理列配置
+    if (props.component.type === 'table' && data && Array.isArray(data)) {
+      // 确保columns中的所有dataIndex都在data中存在
+      if (updatedComponent.props.columns && Array.isArray(updatedComponent.props.columns)) {
+        const columns = updatedComponent.props.columns as Array<{
+          title: string
+          dataIndex: string
+          key: string
+        }>
+
+        // 检查数据中的第一行是否包含所有列
+        if (data.length > 0) {
+          const firstRow = data[0]
+          const missingColumns = columns.filter(
+            (col) => col.dataIndex !== 'action' && !(col.dataIndex in firstRow),
+          )
+
+          // 为缺失的列添加默认数据
+          if (missingColumns.length > 0) {
+            data.forEach((row: Record<string, unknown>) => {
+              missingColumns.forEach((col) => {
+                row[col.dataIndex] = `${col.title}数据`
+              })
+            })
+          }
+        }
+      }
     }
 
     emit('update', updatedComponent)

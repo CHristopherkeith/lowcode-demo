@@ -216,7 +216,10 @@ const handleComponentAdded = (event: { newIndex: number; item: HTMLElement }) =>
         for (let i = 1; i <= 5; i++) {
           const row: Record<string, unknown> = { key: i.toString() }
           columns.forEach((column) => {
-            row[column.dataIndex] = `${column.title}${i}`
+            // 跳过操作列
+            if (column.dataIndex !== 'action') {
+              row[column.dataIndex] = `${column.title}${i}`
+            }
           })
           dataSource.push(row)
         }

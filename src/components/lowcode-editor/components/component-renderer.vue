@@ -4,7 +4,12 @@
     :style="wrapperStylesObj"
     @click.stop="handleClick"
   >
-    <component :is="resolveComponent(config.type)" v-bind="componentProps">
+    <!-- 按钮组件特殊处理 -->
+    <template v-if="config.type === 'button'">
+      <a-button v-bind="componentProps">{{ config.props.text }}</a-button>
+    </template>
+    <!-- 其他组件正常处理 -->
+    <component v-else :is="resolveComponent(config.type)" v-bind="componentProps">
       <!-- 特殊处理栅格行容器，只允许拖入列容器 -->
       <template v-if="config.type === 'row'">
         <!-- item-key="id"
@@ -171,7 +176,6 @@ import {
   Col,
 } from 'ant-design-vue'
 import { useComponentStore } from '@/stores/component'
-import type { CSSProperties } from 'vue'
 import { VueDraggable } from 'vue-draggable-plus'
 import { v4 as uuidv4 } from 'uuid'
 import {
@@ -382,87 +386,112 @@ const resolveComponent = (type: string) => {
   return componentMap[type] || 'div'
 }
 
+// 添加wrapperStylesObj的计算属性
+const wrapperStylesObj = computed(() => {
+  return props.config.style || {}
+})
+
 // 生成组件所需的props
 const componentProps = computed(() => {
-  const { type, props: customProps, dataSource } = props.config
-  const result = { ...customProps }
+  const propValues: Record<string, any> = { ...props.config.props }
 
-  // 针对不同组件类型做特殊处理
-  if (type === 'button' && result.text) {
-    result.children = result.text
-    delete result.text
+  // 特殊处理表单组件
+  if (propValues.type === 'form') {
+    // 表单组件不需要label
+    delete propValues.label
+  }
+
+  // 特殊处理按钮组件 - 删除text属性，将通过template中的插槽显示
+  if (propValues.type === 'button') {
+    // 注意：不再从props中删除text属性
+    // delete propValues.text;
+  }
+
+  // 特殊处理表格
+  if (props.config.type === 'table') {
+    if (propValues.columns) {
+      // 确保列定义不是字符串而是对象
+      try {
+        propValues.columns =
+          typeof propValues.columns === 'string'
+            ? JSON.parse(propValues.columns)
+            : propValues.columns
+      } catch (e) {
+        console.error('Invalid table columns', propValues.columns)
+        propValues.columns = []
+      }
+
+      // 注释掉自动添加操作列的代码
+      /*
+      // 为表格添加操作列
+      if (Array.isArray(propValues.columns) && propValues.columns.length > 0 && props.isEditor) {
+        const hasActionColumn = propValues.columns.some(
+          (col: { dataIndex: string }) => col.dataIndex === 'action',
+        )
+        if (!hasActionColumn) {
+          propValues.columns.push({
+            title: '操作',
+            dataIndex: 'action',
+            key: 'action',
+            fixed: 'right',
+            width: 120,
+          })
+        }
+      }
+      */
+    }
+
+    // 直接在表格组件上设置数据源
+    if (
+      props.config.dataSource &&
+      typeof props.config.dataSource === 'object' &&
+      'data' in props.config.dataSource
+    ) {
+      propValues.dataSource = props.config.dataSource.data
+    }
   }
 
   // 处理表单的labelCol格式
-  if (type === 'form' && result.labelColType && result.labelColValue) {
+  if (propValues.type === 'form' && propValues.labelColType && propValues.labelColValue) {
     // 根据类型生成不同格式的labelCol
-    if (result.labelColType === 'span') {
-      result.labelCol = { span: result.labelColValue }
-    } else if (result.labelColType === 'px') {
-      result.labelCol = { style: { width: `${result.labelColValue}px` } }
+    if (propValues.labelColType === 'span') {
+      propValues.labelCol = { span: propValues.labelColValue }
+    } else if (propValues.labelColType === 'px') {
+      propValues.labelCol = { style: { width: `${propValues.labelColValue}px` } }
     }
     // 删除辅助属性
-    delete result.labelColType
-    delete result.labelColValue
+    delete propValues.labelColType
+    delete propValues.labelColValue
   }
 
   // 为图表组件提供数据源
-  if ((type === 'barChart' || type === 'lineChart') && dataSource) {
-    result.dataSource = dataSource
+  if (props.config.type === 'barChart' || props.config.type === 'lineChart') {
+    if (
+      props.config.dataSource &&
+      typeof props.config.dataSource === 'object' &&
+      'data' in props.config.dataSource
+    ) {
+      propValues.dataSource = props.config.dataSource.data
+    }
   }
 
-  // 为表格组件提供数据源
-  if (type === 'table' && dataSource && dataSource.data) {
-    result.dataSource = dataSource.data
-  }
-
-  return result
-})
-
-// 组件容器样式计算
-const wrapperStylesObj = computed<CSSProperties>(() => {
-  // 基础样式
-  const baseStyle: CSSProperties = {
-    cursor: props.isEditor ? 'move' : 'auto',
-  }
-
-  // 从配置中获取样式并合并
-  const { style } = props.config
-  if (!style) return baseStyle
-
-  // 使用对象解构和动态属性赋值简化代码
-  const styleProps = [
-    'position',
-    'width',
-    'height',
-    'backgroundColor',
-    'border',
-    'borderRadius',
-    'zIndex',
-  ]
-
-  // 遍历所有样式属性并添加到baseStyle
-  styleProps.forEach((prop) => {
-    if (style[prop]) baseStyle[prop] = style[prop]
-  })
-
-  return baseStyle
+  return propValues
 })
 
 // 获取表单项的labelCol
-const getFormItemLabelCol = (props: Record<string, any>) => {
-  if (!props) return {}
+const getFormItemLabelCol = (formProps: Record<string, any>) => {
+  if (!formProps) return {}
 
   // 如果已经有labelCol属性（可能是由componentProps计算生成的）
-  if (props.labelCol) {
-    return props.labelCol
+  if (formProps.labelCol) {
+    return formProps.labelCol
   }
 
   // 处理labelColType和labelColValue
-  if (props.labelColType === 'span') {
-    return { span: props.labelColValue }
-  } else if (props.labelColType === 'px') {
-    return { style: { width: `${props.labelColValue}px` } }
+  if (formProps.labelColType === 'span') {
+    return { span: formProps.labelColValue }
+  } else if (formProps.labelColType === 'px') {
+    return { style: { width: `${formProps.labelColValue}px` } }
   }
 
   return {}

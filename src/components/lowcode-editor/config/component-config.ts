@@ -243,14 +243,17 @@ export const basicComponents: ComponentDefinition[] = [
     defaultProps: {
       text: '按钮',
       type: 'primary',
-      label: '按钮',
+      label: '',
+      danger: false,
+      disabled: false,
+      shape: 'default',
     },
     propConfig: [
       {
         name: 'label',
         label: '字段标签',
         type: 'string',
-        defaultValue: '按钮',
+        defaultValue: '',
       },
       {
         name: 'text',
@@ -269,6 +272,30 @@ export const basicComponents: ComponentDefinition[] = [
           { label: '虚线按钮', value: 'dashed' },
           { label: '文本按钮', value: 'text' },
           { label: '链接按钮', value: 'link' },
+          { label: '幽灵按钮', value: 'ghost' },
+        ],
+      },
+      {
+        name: 'danger',
+        label: '危险按钮',
+        type: 'boolean',
+        defaultValue: false,
+      },
+      {
+        name: 'disabled',
+        label: '禁用状态',
+        type: 'boolean',
+        defaultValue: false,
+      },
+      {
+        name: 'shape',
+        label: '按钮形状',
+        type: 'select',
+        defaultValue: 'default',
+        options: [
+          { label: '默认', value: 'default' },
+          { label: '圆形', value: 'circle' },
+          { label: '圆角', value: 'round' },
         ],
       },
     ],

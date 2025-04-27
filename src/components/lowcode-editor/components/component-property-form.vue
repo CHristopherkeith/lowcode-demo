@@ -158,6 +158,34 @@ const handlePropChange = () => {
     }
   }
 
+  // 特殊处理表格列更改，同步更新数据
+  if (
+    props.component.type === 'table' &&
+    props.component.dataSource &&
+    props.component.dataSource.data
+  ) {
+    // 检查是否有列变更
+    const oldColumns = props.component.props.columns || []
+    const newColumns = propValues.columns || []
+
+    if (JSON.stringify(oldColumns) !== JSON.stringify(newColumns)) {
+      // 列配置已更改，同步更新数据源以匹配新的列
+      const dataSource = props.component.dataSource.data
+
+      if (Array.isArray(dataSource) && dataSource.length > 0) {
+        // 对每行数据，添加缺失的列
+        dataSource.forEach((row: Record<string, unknown>) => {
+          newColumns.forEach((col: { dataIndex: string; title: string }) => {
+            if (col.dataIndex !== 'action' && !(col.dataIndex in row)) {
+              // 为新列添加默认数据
+              row[col.dataIndex] = `${col.title}数据`
+            }
+          })
+        })
+      }
+    }
+  }
+
   emit('update', { ...propValues })
 }
 </script>

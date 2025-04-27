@@ -1,191 +1,169 @@
 <template>
   <div class="table-columns-editor">
-    <div class="table-columns-editor__header">
-      <h4>表格列配置</h4>
-      <a-button type="primary" size="small" @click="handleAddColumn">
-        <template #icon><plus-outlined /></template>添加列
-      </a-button>
-    </div>
-    <div class="table-columns-editor__content">
-      <a-empty v-if="columns.length === 0" description="暂无数据列" />
-      <div v-else class="table-columns-editor__list">
-        <div v-for="(column, index) in columns" :key="index" class="table-columns-editor__item">
-          <div class="table-columns-editor__item-header">
-            <span>列 {{ index + 1 }}: {{ column.title }}</span>
-            <a-space>
-              <a-button
-                size="small"
-                type="text"
-                @click="handleMoveColumn(index, 'up')"
-                :disabled="index === 0"
-              >
-                <template #icon><arrow-up-outlined /></template>
-              </a-button>
-              <a-button
-                size="small"
-                type="text"
-                @click="handleMoveColumn(index, 'down')"
-                :disabled="index === columns.length - 1"
-              >
-                <template #icon><arrow-down-outlined /></template>
-              </a-button>
-              <a-button size="small" type="text" danger @click="handleRemoveColumn(index)">
-                <template #icon><delete-outlined /></template>
-              </a-button>
-            </a-space>
-          </div>
-          <a-form layout="vertical">
-            <a-form-item label="列标题">
-              <a-input v-model:value="column.title" @change="handleColumnsChange" />
-            </a-form-item>
-            <a-form-item label="数据字段">
-              <a-input v-model:value="column.dataIndex" @change="handleColumnsChange" />
-            </a-form-item>
-            <a-form-item label="列宽">
-              <a-input-number
-                v-model:value="column.width"
-                style="width: 100%"
-                :min="50"
-                :max="500"
-                :step="10"
-                @change="handleColumnsChange"
-              />
-            </a-form-item>
-            <a-form-item label="对齐方式">
-              <a-select
-                v-model:value="column.align"
-                style="width: 100%"
-                @change="handleColumnsChange"
-              >
-                <a-select-option value="left">左对齐</a-select-option>
-                <a-select-option value="center">居中对齐</a-select-option>
-                <a-select-option value="right">右对齐</a-select-option>
-              </a-select>
-            </a-form-item>
-          </a-form>
-        </div>
-      </div>
+    <a-table
+      :dataSource="localColumns"
+      :columns="editorColumns"
+      size="small"
+      :pagination="false"
+      bordered
+    />
+    <div class="table-columns-editor__actions">
+      <a-button type="primary" size="small" @click="handleAddColumn">添加列</a-button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, defineProps, defineEmits, watch } from 'vue'
-import {
-  PlusOutlined,
-  DeleteOutlined,
-  ArrowUpOutlined,
-  ArrowDownOutlined,
-} from '@ant-design/icons-vue'
-
-interface TableColumn {
-  title: string
-  dataIndex: string
-  key?: string
-  width?: number
-  align?: 'left' | 'center' | 'right'
-}
+import { ref, watch, h } from 'vue'
+import { Form, Input, Button, Popconfirm } from 'ant-design-vue'
 
 const props = defineProps<{
-  value: TableColumn[]
+  value: Array<{
+    title: string
+    dataIndex: string
+    key: string
+    [key: string]: unknown
+  }>
 }>()
 
 const emit = defineEmits<{
-  (e: 'update:value', columns: TableColumn[]): void
+  (e: 'update:value', columns: Array<Record<string, unknown>>): void
 }>()
 
-const columns = ref<TableColumn[]>([])
+// 本地列数据
+const localColumns = ref<Array<Record<string, unknown>>>([])
 
 // 初始化列数据
 watch(
   () => props.value,
   (newVal) => {
     if (newVal) {
-      columns.value = JSON.parse(JSON.stringify(newVal))
+      // 过滤掉action列，这是自动添加的
+      localColumns.value = newVal
+        .filter((col) => col.dataIndex !== 'action')
+        .map((col) => ({ ...col }))
     }
   },
   { immediate: true, deep: true },
 )
 
-// 处理添加列
+// 单元格变更处理
+const handleCellChange = (index: number, key: string, value: string) => {
+  localColumns.value[index][key] = value
+  // 如果是dataIndex变更，也更新key
+  if (key === 'dataIndex') {
+    localColumns.value[index].key = value
+  }
+  emitColumnChange()
+}
+
+// 添加列
 const handleAddColumn = () => {
-  const newColumn: TableColumn = {
-    title: `列${columns.value.length + 1}`,
-    dataIndex: `col${columns.value.length + 1}`,
-    key: `col${columns.value.length + 1}`,
-    width: 150,
-    align: 'left',
+  const newColumn = {
+    title: `新列${localColumns.value.length + 1}`,
+    dataIndex: `col${localColumns.value.length + 1}`,
+    key: `col${localColumns.value.length + 1}`,
   }
-  columns.value.push(newColumn)
-  handleColumnsChange()
+  localColumns.value.push(newColumn)
+  emitColumnChange()
 }
 
-// 处理移除列
-const handleRemoveColumn = (index: number) => {
-  columns.value.splice(index, 1)
-  handleColumnsChange()
+// 删除列
+const handleDeleteColumn = (index: number) => {
+  localColumns.value.splice(index, 1)
+  emitColumnChange()
 }
 
-// 处理移动列
-const handleMoveColumn = (index: number, direction: 'up' | 'down') => {
-  if (direction === 'up' && index > 0) {
-    const temp = columns.value[index]
-    columns.value[index] = columns.value[index - 1]
-    columns.value[index - 1] = temp
-  } else if (direction === 'down' && index < columns.value.length - 1) {
-    const temp = columns.value[index]
-    columns.value[index] = columns.value[index + 1]
-    columns.value[index + 1] = temp
-  }
-  handleColumnsChange()
+// 发送列变更事件
+const emitColumnChange = () => {
+  emit('update:value', [...localColumns.value])
 }
 
-// 处理列变更
-const handleColumnsChange = () => {
-  // 确保每列都有key
-  columns.value.forEach((col) => {
-    if (!col.key) {
-      col.key = col.dataIndex
-    }
-  })
-  emit('update:value', JSON.parse(JSON.stringify(columns.value)))
-}
+// 编辑器列定义
+const editorColumns = [
+  {
+    title: '列标题',
+    dataIndex: 'title',
+    key: 'title',
+    width: '30%',
+    customRender: ({ record, index }: { record: Record<string, unknown>; index: number }) => {
+      return h(Form.Item, { style: { margin: 0 } }, [
+        h(Input, {
+          value: record.title as string,
+          onChange: (e: Event) =>
+            handleCellChange(index, 'title', (e.target as HTMLInputElement).value),
+        }),
+      ])
+    },
+  },
+  {
+    title: '数据字段',
+    dataIndex: 'dataIndex',
+    key: 'dataIndex',
+    width: '30%',
+    customRender: ({ record, index }: { record: Record<string, unknown>; index: number }) => {
+      return h(Form.Item, { style: { margin: 0 } }, [
+        h(Input, {
+          value: record.dataIndex as string,
+          onChange: (e: Event) =>
+            handleCellChange(index, 'dataIndex', (e.target as HTMLInputElement).value),
+        }),
+      ])
+    },
+  },
+  {
+    title: '宽度',
+    dataIndex: 'width',
+    key: 'width',
+    width: '20%',
+    customRender: ({ record, index }: { record: Record<string, unknown>; index: number }) => {
+      return h(Form.Item, { style: { margin: 0 } }, [
+        h(Input, {
+          value: record.width as string,
+          onChange: (e: Event) =>
+            handleCellChange(index, 'width', (e.target as HTMLInputElement).value),
+        }),
+      ])
+    },
+  },
+  {
+    title: '操作',
+    key: 'action',
+    width: '20%',
+    customRender: ({ index }: { record: Record<string, unknown>; index: number }) => {
+      return h(
+        Popconfirm,
+        {
+          title: '确定删除此列?',
+          onConfirm: () => handleDeleteColumn(index),
+          okText: '确定',
+          cancelText: '取消',
+        },
+        {
+          default: () =>
+            h(
+              Button,
+              {
+                type: 'link',
+                danger: true,
+              },
+              { default: () => '删除' },
+            ),
+        },
+      )
+    },
+  },
+]
 </script>
 
 <style lang="scss" scoped>
 .table-columns-editor {
-  width: 100%;
+  margin-bottom: 16px;
 
-  &__header {
+  &__actions {
+    margin-top: 8px;
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
-  }
-
-  &__list {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    max-height: 400px;
-    overflow-y: auto;
-  }
-
-  &__item {
-    border: 1px solid #f0f0f0;
-    border-radius: 4px;
-    padding: 12px;
-    background-color: #fafafa;
-  }
-
-  &__item-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
-    padding-bottom: 8px;
-    border-bottom: 1px dashed #e0e0e0;
-    font-weight: bold;
+    justify-content: flex-end;
   }
 }
 </style>
