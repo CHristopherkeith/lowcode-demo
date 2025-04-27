@@ -10,74 +10,23 @@
           <a-collapse v-model:activeKey="basicActiveKeys">
             <a-collapse-panel key="style" header="样式设置">
               <a-form-item label="宽度">
-                <a-input-number
-                  v-model:value="styleForm.width"
-                  :min="0"
-                  :max="2000"
-                  :addonAfter="styleForm.widthUnit"
-                  style="width: 150px"
-                  @change="updateStyle('width', `${styleForm.width}${styleForm.widthUnit}`)"
-                />
-                <a-select
-                  v-model:value="styleForm.widthUnit"
-                  style="width: 70px; margin-left: 8px"
-                  @change="updateStyle('width', `${styleForm.width}${styleForm.widthUnit}`)"
-                >
-                  <a-select-option value="px">px</a-select-option>
-                  <a-select-option value="%">%</a-select-option>
-                </a-select>
-              </a-form-item>
-
-              <a-form-item label="高度">
-                <a-input-number
-                  v-model:value="styleForm.height"
-                  :min="0"
-                  :max="2000"
-                  :addonAfter="styleForm.heightUnit"
-                  style="width: 150px"
-                  @change="updateStyle('height', `${styleForm.height}${styleForm.heightUnit}`)"
-                />
-                <a-select
-                  v-model:value="styleForm.heightUnit"
-                  style="width: 70px; margin-left: 8px"
-                  @change="updateStyle('height', `${styleForm.height}${styleForm.heightUnit}`)"
-                >
-                  <a-select-option value="px">px</a-select-option>
-                  <a-select-option value="%">%</a-select-option>
-                </a-select>
-              </a-form-item>
-
-              <a-form-item label="背景颜色">
-                <a-input
-                  v-model:value="styleForm.backgroundColor"
-                  @change="updateStyle('backgroundColor', styleForm.backgroundColor)"
-                >
-                  <template #prefix>
-                    <div
-                      class="property-editor__color-block"
-                      :style="{ backgroundColor: styleForm.backgroundColor || '#ffffff' }"
-                    ></div>
-                  </template>
-                </a-input>
-              </a-form-item>
-
-              <a-form-item label="边框">
-                <a-input
-                  v-model:value="styleForm.border"
-                  placeholder="1px solid #ddd"
-                  @change="updateStyle('border', styleForm.border)"
-                />
-              </a-form-item>
-
-              <a-form-item label="边框圆角">
-                <a-input-number
-                  v-model:value="styleForm.borderRadius"
-                  :min="0"
-                  :max="50"
-                  :addonAfter="'px'"
-                  style="width: 150px"
-                  @change="updateStyle('borderRadius', `${styleForm.borderRadius}px`)"
-                />
+                <a-input-group compact>
+                  <a-input-number
+                    v-model:value="styleForm.width"
+                    :min="0"
+                    :max="2000"
+                    style="width: 70%"
+                    @change="updateStyle('width', `${styleForm.width}${styleForm.widthUnit}`)"
+                  />
+                  <a-select
+                    v-model:value="styleForm.widthUnit"
+                    style="width: 30%"
+                    @change="updateStyle('width', `${styleForm.width}${styleForm.widthUnit}`)"
+                  >
+                    <a-select-option value="px">px</a-select-option>
+                    <a-select-option value="%">%</a-select-option>
+                  </a-select>
+                </a-input-group>
               </a-form-item>
 
               <a-form-item label="下边距">
@@ -86,7 +35,7 @@
                   :min="0"
                   :max="100"
                   :addonAfter="'px'"
-                  style="width: 150px"
+                  style="width: 100%"
                   @change="updateStyle('marginBottom', `${styleForm.marginBottom}px`)"
                 />
               </a-form-item>
@@ -213,11 +162,6 @@ const parseStyleValue = (
 const styleForm = reactive({
   width: 0,
   widthUnit: 'px',
-  height: 0,
-  heightUnit: 'px',
-  backgroundColor: '',
-  border: '',
-  borderRadius: 0,
   marginBottom: 0,
 })
 
@@ -240,19 +184,13 @@ const initFormData = () => {
 
   // 解析样式值
   if (style) {
-    const { width, height, backgroundColor, border, borderRadius, marginBottom } = style
+    const { width, marginBottom } = style
 
     const parsedWidth = parseStyleValue(width, 'px')
-    const parsedHeight = parseStyleValue(height, 'px')
     const parsedMarginBottom = parseStyleValue(marginBottom, 'px')
 
     styleForm.width = parsedWidth.value
     styleForm.widthUnit = parsedWidth.unit
-    styleForm.height = parsedHeight.value
-    styleForm.heightUnit = parsedHeight.unit
-    styleForm.backgroundColor = backgroundColor || ''
-    styleForm.border = border || ''
-    styleForm.borderRadius = parseFloat(borderRadius as string) || 0
     styleForm.marginBottom = parsedMarginBottom.value
   }
 
