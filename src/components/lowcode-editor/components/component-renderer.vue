@@ -237,8 +237,44 @@ const loadApiData = () => {
   // 清除之前的定时器
   clearApiRefreshTimers()
 
+  // 准备API参数
+  const apiParams: Record<string, unknown> = props.config.dataSource?.params
+    ? { ...props.config.dataSource.params }
+    : {}
+
+  // 为表格组件添加列信息
+  if (props.config.type === 'table' && props.config.props.columns) {
+    apiParams.columns = props.config.props.columns
+  }
+
+  // 为表单组件收集字段信息
+  if (props.config.type === 'form' && props.config.children) {
+    const fields: { name: string; type: string }[] = []
+    const collectFields = (components: Component[]) => {
+      components.forEach((comp) => {
+        if (comp.fieldName) {
+          fields.push({
+            name: comp.fieldName,
+            type: comp.type,
+          })
+        }
+        if (comp.children?.length) {
+          collectFields(comp.children)
+        }
+      })
+    }
+    collectFields(props.config.children)
+    apiParams.fields = fields
+  }
+
+  // 更新dataSource参数
+  const updatedDataSource = {
+    ...props.config.dataSource,
+    params: apiParams,
+  }
+
   // 获取API数据
-  fetchApiData(props.config.type, props.config.dataSource, (data) => {
+  fetchApiData(props.config.type, updatedDataSource, (data) => {
     console.log(`[${props.config.type}] API数据加载成功:`, data)
 
     // 更新组件的数据源数据
@@ -257,7 +293,7 @@ const loadApiData = () => {
     apiRefreshTimers.value[props.config.id] = setupRefreshTimer(
       props.config.id,
       props.config.type,
-      props.config.dataSource,
+      updatedDataSource,
       (data) => {
         // 更新组件的数据源数据
         const updatedComponent = { ...props.config }
