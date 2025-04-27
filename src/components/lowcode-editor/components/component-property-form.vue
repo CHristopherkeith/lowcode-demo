@@ -186,6 +186,60 @@ const handlePropChange = () => {
     }
   }
 
+  // 特殊处理表单组件 - 提供默认数据
+  if (props.component.type === 'form') {
+    // 在控制台打印表单的所有字段和相关信息
+    console.log('表单组件属性更新:', propValues)
+
+    // 收集表单字段信息
+    const fieldInfo: Record<string, { type: string; defaultValue: any }> = {}
+    const collectFields = (components: Component[]) => {
+      components.forEach((comp) => {
+        if (comp.fieldName) {
+          fieldInfo[comp.fieldName] = {
+            type: comp.type,
+            defaultValue: comp.props.defaultValue || comp.props.value || null,
+          }
+        }
+        if (comp.children?.length) {
+          collectFields(comp.children)
+        }
+      })
+    }
+
+    if (props.component.children?.length) {
+      collectFields(props.component.children)
+      console.log('表单字段信息:', fieldInfo)
+
+      // 创建默认的表单数据对象 - 这个可以在控制台中使用
+      const defaultData = Object.entries(fieldInfo).reduce(
+        (acc, [field, info]) => {
+          acc[field] =
+            info.defaultValue ||
+            (info.type === 'checkbox'
+              ? []
+              : info.type === 'input'
+                ? '默认文本'
+                : info.type === 'datePicker'
+                  ? '2023-01-01'
+                  : null)
+          return acc
+        },
+        {} as Record<string, any>,
+      )
+
+      console.log('表单默认数据JSON:')
+      console.log(JSON.stringify(defaultData, null, 2))
+
+      // 如果表单组件没有数据源中的静态数据，可以打印建议使用这个数据
+      if (!props.component.dataSource?.data) {
+        console.log(
+          '提示: 可以在表单的"数据绑定"标签中的"静态数据"文本框中粘贴上面的JSON，为表单组件提供默认数据',
+        )
+      }
+    }
+  }
+
   emit('update', { ...propValues })
 }
 </script>

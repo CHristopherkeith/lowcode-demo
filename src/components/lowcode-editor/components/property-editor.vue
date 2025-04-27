@@ -100,6 +100,29 @@
               />
             </a-form-item>
           </template>
+
+          <!-- 表单数据保存配置 -->
+          <template v-if="component.type === 'form'">
+            <a-divider>表单数据保存</a-divider>
+            <a-form-item label="保存API地址">
+              <a-input
+                v-model:value="dataForm.dataSaveApi.url"
+                placeholder="https://api.example.com/save"
+                @change="updateDataSaveApi('url', dataForm.dataSaveApi.url)"
+              />
+            </a-form-item>
+
+            <a-form-item label="请求方法">
+              <a-select
+                v-model:value="dataForm.dataSaveApi.method"
+                style="width: 100%"
+                @change="updateDataSaveApi('method', dataForm.dataSaveApi.method)"
+              >
+                <a-select-option value="POST">POST</a-select-option>
+                <a-select-option value="PUT">PUT</a-select-option>
+              </a-select>
+            </a-form-item>
+          </template>
         </a-form>
       </a-tab-pane>
     </a-tabs>
@@ -167,10 +190,14 @@ const styleForm = reactive({
 
 // 数据表单
 const dataForm = reactive({
-  type: 'static',
+  type: 'static' as 'static' | 'api',
   url: '',
-  method: 'GET',
+  method: 'GET' as 'GET' | 'POST' | 'PUT' | 'DELETE',
   refreshInterval: 0,
+  dataSaveApi: {
+    url: '',
+    method: 'POST' as 'POST' | 'PUT',
+  },
 })
 
 // 静态数据JSON
@@ -200,6 +227,12 @@ const initFormData = () => {
     dataForm.url = dataSource.url
     dataForm.method = dataSource.method
     dataForm.refreshInterval = dataSource.refreshInterval
+
+    // 初始化dataSaveApi
+    dataForm.dataSaveApi = {
+      url: dataSource.dataSaveApi?.url || '',
+      method: (dataSource.dataSaveApi?.method || 'POST') as 'POST' | 'PUT',
+    }
 
     // 处理静态数据
     if (dataSource.data) {
@@ -304,7 +337,11 @@ const updateDataSource = (key: string, value: unknown) => {
 // 处理静态数据更新
 const handleStaticDataUpdate = () => {
   try {
+    console.log('静态数据JSON输入:', staticDataJson.value)
+
     const data = staticDataJson.value ? JSON.parse(staticDataJson.value) : null
+    console.log('解析后的数据对象:', data)
+
     const updatedComponent = { ...props.component }
     if (!updatedComponent.dataSource) {
       updatedComponent.dataSource = {
@@ -321,6 +358,8 @@ const handleStaticDataUpdate = () => {
       ...updatedComponent.dataSource,
       data,
     }
+
+    console.log('更新后的组件数据源:', updatedComponent.dataSource)
 
     // 如果是表格组件，需要额外处理列配置
     if (props.component.type === 'table' && data && Array.isArray(data)) {
@@ -341,6 +380,7 @@ const handleStaticDataUpdate = () => {
 
           // 为缺失的列添加默认数据
           if (missingColumns.length > 0) {
+            console.log('为缺失的列添加默认数据:', missingColumns)
             data.forEach((row: Record<string, unknown>) => {
               missingColumns.forEach((col) => {
                 row[col.dataIndex] = `${col.title}数据`
@@ -349,12 +389,57 @@ const handleStaticDataUpdate = () => {
           }
         }
       }
+    } else if (props.component.type === 'form') {
+      // 如果是表单组件，打印更详细的信息
+      console.log('表单组件数据更新，新数据:', data)
+      console.log('表单组件的子组件数量:', updatedComponent.children.length)
+
+      // 打印表单的所有字段
+      const fields: string[] = []
+      const collectFields = (components: Component[]) => {
+        components.forEach((comp) => {
+          if (comp.fieldName) {
+            fields.push(`${comp.fieldName} (${comp.type})`)
+          }
+          if (comp.children?.length) {
+            collectFields(comp.children)
+          }
+        })
+      }
+
+      collectFields(updatedComponent.children)
+      console.log('表单包含的字段:', fields)
     }
 
     emit('update', updatedComponent)
   } catch (error) {
     console.error('JSON解析错误', error)
   }
+}
+
+// 更新表单数据保存配置
+const updateDataSaveApi = (key: string, value: string) => {
+  const updatedComponent = { ...props.component }
+  if (!updatedComponent.dataSource) {
+    updatedComponent.dataSource = {
+      type: 'static',
+      data: null,
+      url: '',
+      method: 'GET',
+      params: {},
+      refreshInterval: 0,
+    }
+  }
+
+  updatedComponent.dataSource = {
+    ...updatedComponent.dataSource,
+    dataSaveApi: {
+      ...updatedComponent.dataSource.dataSaveApi,
+      [key]: value,
+    },
+  }
+
+  emit('update', updatedComponent)
 }
 </script>
 

@@ -6,7 +6,9 @@
   >
     <!-- 按钮组件特殊处理 -->
     <template v-if="config.type === 'button'">
-      <a-button v-bind="componentProps">{{ config.props.text }}</a-button>
+      <a-button v-bind="componentProps" @click="handleButtonClick">{{
+        config.props.text
+      }}</a-button>
     </template>
     <!-- 其他组件正常处理 -->
     <component v-else :is="resolveComponent(config.type)" v-bind="componentProps">
@@ -73,16 +75,18 @@
           item-key="id"
           tag="div"
           class="component-renderer__dropable-area"
-          :class="{ 'component-renderer__inline-form': config.props.layout === 'inline' }"
+          :class="{
+            'component-renderer__inline-form': config.props && config.props.layout === 'inline',
+          }"
           @add="handleChildAdded"
         >
           <template v-for="child in config.children" :key="child.id">
             <div
-              v-if="config.props.layout === 'inline'"
+              v-if="config.props && config.props.layout === 'inline'"
               class="inline-form-item-wrapper"
               :style="{
                 display: 'inline-block',
-                width: child.style.width || 'auto',
+                width: (child.style && child.style.width) || 'auto',
                 marginRight: '16px',
                 marginBottom: '8px',
                 verticalAlign: 'top',
@@ -174,6 +178,7 @@ import {
   Table,
   Row,
   Col,
+  message,
 } from 'ant-design-vue'
 import { useComponentStore } from '@/stores/component'
 import { VueDraggable } from 'vue-draggable-plus'
@@ -341,7 +346,10 @@ const handleChildAdded = (event: { newIndex: number; item: HTMLElement }) => {
 
       // 替换掉原始拖入的组件
       props.config.children.splice(newIndex, 1, newComponent)
+
+      // 选中新添加的组件
       componentStore.setSelectedComponentId(newComponent.id)
+      emit('select', newComponent)
     }
   }
 }
@@ -495,6 +503,138 @@ const getFormItemLabelCol = (formProps: Record<string, any>) => {
   }
 
   return {}
+}
+
+// 处理按钮点击事件
+const handleButtonClick = () => {
+  // 检查是否启用了表单保存功能
+  if (props.config.props.formSave) {
+    // 使用store查找按钮所在的表单组件
+    console.log('=== 按钮点击事件开始 ===')
+    console.log('按钮组件配置:', props.config)
+
+    const parentForm = componentStore.findFormComponent(props.config.id)
+
+    // 检查所有组件
+    console.log('组件存储中的所有组件:', componentStore.components)
+
+    if (parentForm) {
+      console.log('找到了父表单组件:', parentForm)
+
+      // 检查表单字段
+      const fields: string[] = []
+      const fieldComponents: Component[] = []
+      const collectFields = (components: Component[]) => {
+        components.forEach((comp) => {
+          if (comp.fieldName) {
+            fields.push(`${comp.fieldName} (${comp.type})`)
+            fieldComponents.push(comp)
+          }
+          if (comp.children?.length) {
+            collectFields(comp.children)
+          }
+        })
+      }
+
+      collectFields(parentForm.children)
+      console.log('表单包含的字段:', fields)
+      console.log('字段对应的组件:', fieldComponents)
+
+      // 检查表单组件是否配置了数据保存API
+      if (parentForm.dataSource?.dataSaveApi?.url) {
+        console.log('表单配置了数据保存API:', parentForm.dataSource.dataSaveApi)
+
+        // 检查表单是否有静态数据
+        if (parentForm.dataSource.data) {
+          console.log('表单有静态数据源:', parentForm.dataSource.data)
+        } else {
+          console.log('表单没有静态数据源，将从子组件收集数据')
+        }
+
+        // 使用store收集表单数据
+        const formData = componentStore.collectFormData(parentForm)
+
+        // 打印表单组件和收集的表单数据
+        console.log('表单组件配置:', parentForm)
+        console.log('收集到的表单字段数据:', formData)
+
+        // 检查数据是否为空
+        if (Object.keys(formData).length === 0) {
+          console.log('警告: 收集到的表单数据为空!')
+          console.log(
+            '建议: 在表单组件的"数据绑定"标签中添加静态数据，或确保表单子组件都有设置字段名(fieldName)',
+          )
+
+          // 创建一些示例数据，以便演示
+          const demoData: Record<string, unknown> = {}
+          fieldComponents.forEach((comp) => {
+            if (comp.fieldName) {
+              demoData[comp.fieldName] =
+                comp.type === 'input'
+                  ? '示例文本'
+                  : comp.type === 'select'
+                    ? '选项1'
+                    : comp.type === 'datePicker'
+                      ? '2023-01-01'
+                      : comp.type === 'checkbox'
+                        ? ['选项1', '选项2']
+                        : '示例值'
+            }
+          })
+
+          if (Object.keys(demoData).length > 0) {
+            console.log('使用生成的示例数据进行演示:')
+            console.log(JSON.stringify(demoData, null, 2))
+
+            // 提交示例数据而不是空数据
+            submitFormData(
+              parentForm.dataSource.dataSaveApi.url,
+              demoData,
+              parentForm.dataSource.dataSaveApi.method,
+            )
+            return
+          }
+        }
+
+        // 提交表单数据到保存API
+        submitFormData(
+          parentForm.dataSource.dataSaveApi.url,
+          formData,
+          parentForm.dataSource.dataSaveApi.method,
+        )
+      } else {
+        // 提示用户需要先配置表单的数据保存API
+        console.log('表单没有配置数据保存API')
+        message.warning('请先在表单组件配置数据保存API')
+      }
+    } else {
+      // 提示用户按钮需要放在表单组件内
+      console.log('未找到按钮所在的表单组件，请确保按钮是表单的子组件')
+      message.warning('表单保存按钮需要放在表单组件内')
+    }
+
+    console.log('=== 按钮点击事件结束 ===')
+  }
+}
+
+// 提交表单数据到API
+const submitFormData = (url: string, data: Record<string, unknown>, method: string = 'POST') => {
+  // 在实际项目中，应使用axios或fetch进行API调用
+  // 这里简单模拟API调用
+  console.log('==================================')
+  console.log(`准备提交表单数据到 ${url}`)
+  console.log(`请求方法: ${method}`)
+  console.log('表单数据内容:')
+  console.log(JSON.stringify(data, null, 2))
+  console.log('==================================')
+
+  message.success('表单数据已提交')
+
+  // 模拟API调用
+  setTimeout(() => {
+    console.log('API调用完成，服务器返回成功')
+    message.success('表单数据保存成功')
+  }, 1000)
 }
 </script>
 

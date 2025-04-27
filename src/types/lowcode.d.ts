@@ -22,6 +22,10 @@ export interface DataSource {
   method: 'GET' | 'POST' | 'PUT' | 'DELETE'
   params: Record<string, unknown>
   refreshInterval: number // 刷新间隔，单位秒，0表示不自动刷新
+  dataSaveApi?: {
+    url: string
+    method: 'POST' | 'PUT'
+  }
 }
 
 // 组件配置
@@ -32,6 +36,7 @@ export interface Component {
   style: ComponentStyle
   dataSource: DataSource
   children: Component[]
+  fieldName?: string // 字段名称，对应后端字段
 }
 
 // 布局类型

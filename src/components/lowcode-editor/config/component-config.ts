@@ -92,6 +92,7 @@ export const basicComponents: ComponentDefinition[] = [
       placeholder: '请输入内容',
       allowClear: true,
       label: '输入框',
+      fieldName: '',
     },
     propConfig: [
       {
@@ -99,6 +100,12 @@ export const basicComponents: ComponentDefinition[] = [
         label: '字段标签',
         type: 'string',
         defaultValue: '输入框',
+      },
+      {
+        name: 'fieldName',
+        label: '字段名称',
+        type: 'string',
+        defaultValue: '',
       },
       {
         name: 'placeholder',
@@ -126,6 +133,7 @@ export const basicComponents: ComponentDefinition[] = [
       ],
       allowClear: true,
       label: '下拉选择框',
+      fieldName: '',
     },
     propConfig: [
       {
@@ -133,6 +141,12 @@ export const basicComponents: ComponentDefinition[] = [
         label: '字段标签',
         type: 'string',
         defaultValue: '下拉选择框',
+      },
+      {
+        name: 'fieldName',
+        label: '字段名称',
+        type: 'string',
+        defaultValue: '',
       },
       {
         name: 'placeholder',
@@ -156,6 +170,7 @@ export const basicComponents: ComponentDefinition[] = [
       placeholder: '请选择日期',
       format: 'YYYY-MM-DD',
       label: '日期选择器',
+      fieldName: '',
     },
     propConfig: [
       {
@@ -163,6 +178,12 @@ export const basicComponents: ComponentDefinition[] = [
         label: '字段标签',
         type: 'string',
         defaultValue: '日期选择器',
+      },
+      {
+        name: 'fieldName',
+        label: '字段名称',
+        type: 'string',
+        defaultValue: '',
       },
       {
         name: 'placeholder',
@@ -188,6 +209,7 @@ export const basicComponents: ComponentDefinition[] = [
         { label: '选项2', value: '2' },
       ],
       label: '单选框',
+      fieldName: '',
     },
     propConfig: [
       {
@@ -195,6 +217,12 @@ export const basicComponents: ComponentDefinition[] = [
         label: '字段标签',
         type: 'string',
         defaultValue: '单选框',
+      },
+      {
+        name: 'fieldName',
+        label: '字段名称',
+        type: 'string',
+        defaultValue: '',
       },
       {
         name: 'options',
@@ -217,6 +245,7 @@ export const basicComponents: ComponentDefinition[] = [
         { label: '选项2', value: '2' },
       ],
       label: '复选框',
+      fieldName: '',
     },
     propConfig: [
       {
@@ -224,6 +253,12 @@ export const basicComponents: ComponentDefinition[] = [
         label: '字段标签',
         type: 'string',
         defaultValue: '复选框',
+      },
+      {
+        name: 'fieldName',
+        label: '字段名称',
+        type: 'string',
+        defaultValue: '',
       },
       {
         name: 'options',
@@ -247,6 +282,7 @@ export const basicComponents: ComponentDefinition[] = [
       danger: false,
       disabled: false,
       shape: 'default',
+      formSave: false,
     },
     propConfig: [
       {
@@ -274,6 +310,12 @@ export const basicComponents: ComponentDefinition[] = [
           { label: '链接按钮', value: 'link' },
           { label: '幽灵按钮', value: 'ghost' },
         ],
+      },
+      {
+        name: 'formSave',
+        label: '表单保存',
+        type: 'boolean',
+        defaultValue: false,
       },
       {
         name: 'danger',

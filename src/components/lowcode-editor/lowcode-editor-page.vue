@@ -52,7 +52,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, computed } from 'vue'
+import { reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { v4 as uuidv4 } from 'uuid'
@@ -115,117 +115,97 @@ const validateMainDrop = (to: unknown, from: unknown, dragEl: HTMLElement) => {
   return draggedType !== 'col' && !basicFormTypes.includes(draggedType || '')
 }
 
-// 处理新组件添加
-const handleComponentAdded = (event: { newIndex: number; item: HTMLElement }) => {
-  // 获取新添加的组件索引
-  const newIndex = event.newIndex
-  // 获取新添加的组件
-  const component = pageConfig.components[newIndex]
+// 处理放置组件事件
+const handleComponentAdded = (event: { item: HTMLElement }) => {
+  if (!event.item || !event.item.dataset || !event.item.dataset.type) return
 
-  // 这里处理新拖入的组件，添加必要的属性
-  if (!component.id) {
-    // 如果是从组件面板拖入的新组件，添加ID和样式属性
-    const allComponents = [...containerComponents, ...basicComponents, ...advancedComponents]
-    const componentConfig = allComponents.find((item) => item.type === component.type)
+  const type = event.item.dataset.type
+  const componentType = type === 'row' ? 'row' : type === 'col' ? 'col' : type
 
-    if (componentConfig) {
-      // 使用新对象替换原组件
-      const newComponent: Component = {
-        id: uuidv4(),
-        type: component.type,
-        props: { ...componentConfig.defaultProps },
-        style: {
-          width: '100%',
-          marginBottom: '10px',
-        },
-        dataSource: {
-          type: 'static',
-          data: null,
-          url: '',
-          method: 'GET',
-          params: {},
-          refreshInterval: 0,
-        },
-        children: [],
-      }
+  // 获取组件配置
+  const allComponents = [...containerComponents, ...basicComponents, ...advancedComponents]
+  const componentConfig = allComponents.find((item) => item.type === componentType)
 
-      // 替换掉原始拖入的组件
-      pageConfig.components.splice(newIndex, 1, newComponent)
-      componentStore.setSelectedComponentId(newComponent.id)
+  if (componentConfig) {
+    // 创建新组件
+    const newComponent: Component = {
+      id: uuidv4(),
+      type: componentType,
+      props: { ...componentConfig.defaultProps },
+      style: {
+        width: '100%',
+        marginBottom: '16px',
+      },
+      dataSource: {
+        type: 'static',
+        data: null,
+        url: '',
+        method: 'GET',
+        params: {},
+        refreshInterval: 0,
+      },
+      children: [],
+    }
 
-      // 对于行容器，默认添加两个列
-      if (component.type === 'row') {
-        // 获取列组件配置
-        const colConfig = containerComponents.find((item) => item.type === 'col')
-        if (colConfig) {
-          for (let i = 0; i < 2; i++) {
-            const colComponent: Component = {
-              id: uuidv4(),
-              type: 'col',
-              props: {
-                ...colConfig.defaultProps,
-                span: 12, // 两列各占50%
-              },
-              style: {},
-              dataSource: {
-                type: 'static',
-                data: null,
-                url: '',
-                method: 'GET',
-                params: {},
-                refreshInterval: 0,
-              },
-              children: [],
-            }
-            newComponent.children.push(colComponent)
-          }
-        }
-      }
-
-      // 为图表组件添加默认数据
-      if (component.type === 'barChart' || component.type === 'lineChart') {
-        newComponent.dataSource.data = {
-          categories: ['类别1', '类别2', '类别3', '类别4', '类别5'],
-          series: [
-            {
-              name: '系列1',
-              data: [120, 200, 150, 80, 70],
-              smooth: component.type === 'lineChart',
-            },
-            {
-              name: '系列2',
-              data: [60, 100, 80, 120, 140],
-              smooth: false,
-            },
-          ],
-        }
-      }
-
-      // 为表格组件添加默认数据
-      if (component.type === 'table') {
-        // 定义默认表格数据
-        const columns = newComponent.props.columns as Array<{
-          title: string
-          dataIndex: string
-          key: string
-        }>
-        const dataSource = []
-
-        // 根据列生成示例数据
-        for (let i = 1; i <= 5; i++) {
-          const row: Record<string, unknown> = { key: i.toString() }
-          columns.forEach((column) => {
-            // 跳过操作列
-            if (column.dataIndex !== 'action') {
-              row[column.dataIndex] = `${column.title}${i}`
-            }
-          })
-          dataSource.push(row)
-        }
-
-        newComponent.dataSource.data = dataSource
+    // 为图表组件添加默认数据
+    if (componentType === 'barChart' || componentType === 'lineChart') {
+      newComponent.dataSource.data = {
+        categories: ['类别1', '类别2', '类别3', '类别4', '类别5'],
+        series: [
+          {
+            name: '系列1',
+            data: [120, 200, 150, 80, 70],
+            smooth: componentType === 'lineChart',
+          },
+          {
+            name: '系列2',
+            data: [60, 100, 80, 120, 140],
+            smooth: componentType === 'lineChart',
+          },
+        ],
       }
     }
+
+    // 为表格组件添加默认数据
+    if (componentType === 'table') {
+      // 定义默认表格数据
+      const columns = newComponent.props.columns as Array<{
+        title: string
+        dataIndex: string
+        key: string
+      }>
+      const dataSource = []
+
+      // 根据列生成示例数据
+      for (let i = 1; i <= 5; i++) {
+        const row: Record<string, unknown> = { key: i.toString() }
+        columns.forEach((column) => {
+          // 跳过操作列
+          if (column.dataIndex !== 'action') {
+            row[column.dataIndex] = `${column.title}${i}`
+          }
+        })
+        dataSource.push(row)
+      }
+
+      newComponent.dataSource.data = dataSource
+    }
+
+    // 查找刚刚拖入的组件（没有ID的组件）
+    const emptyIndex = pageConfig.components.findIndex((comp) => !comp.id || comp.id === '')
+
+    if (emptyIndex !== -1) {
+      // 使用新组件替换没有ID的空组件
+      pageConfig.components.splice(emptyIndex, 1, newComponent)
+    } else {
+      // 如果没有找到空组件，添加到页面配置中
+      pageConfig.components.push(newComponent)
+    }
+
+    // 立即选中新添加的组件
+    componentStore.setSelectedComponentId(newComponent.id)
+    // 更新组件存储中的组件
+    componentStore.components = [...pageConfig.components]
   }
 }
 
@@ -257,6 +237,9 @@ const handleDeleteComponent = (componentId: string) => {
 
   deleteComponentById(pageConfig.components, componentId)
   componentStore.setSelectedComponentId(null)
+
+  // 同步更新组件存储中的组件
+  componentStore.components = [...pageConfig.components]
 }
 
 // 更新组件
@@ -281,11 +264,18 @@ const handleUpdateComponent = (updatedComponent: Component) => {
   }
 
   updateComponentById(pageConfig.components, updatedComponent)
+
+  // 同步更新组件存储中的组件
+  componentStore.components = [...pageConfig.components]
 }
 
 // 保存配置
 const handleSave = () => {
   localStorage.setItem('lowcodePageConfig', JSON.stringify(pageConfig))
+
+  // 更新组件存储
+  componentStore.components = [...pageConfig.components]
+
   message.success('配置已保存')
 }
 
@@ -299,8 +289,46 @@ const handlePreview = () => {
 const handleClear = () => {
   pageConfig.components = []
   componentStore.setSelectedComponentId(null)
+
+  // 更新组件存储
+  componentStore.components = []
+
   message.success('已清空')
 }
+
+// 加载配置
+const loadConfig = () => {
+  // 尝试从本地存储中加载配置
+  const configJson = localStorage.getItem('lowcodePageConfig')
+  if (configJson) {
+    try {
+      console.log('===== 加载到页面配置 =====')
+      console.log('原始JSON:')
+      console.log(configJson)
+
+      const config = JSON.parse(configJson)
+      console.log('解析后的配置对象:')
+      console.log(config)
+
+      pageConfig.title = config.title || '低代码页面'
+      pageConfig.components = config.components || []
+
+      // 更新组件存储中的组件
+      componentStore.components = pageConfig.components
+
+      console.log('===== 页面配置加载完成 =====')
+    } catch (error) {
+      console.error('解析页面配置出错:', error)
+    }
+  } else {
+    console.log('本地存储中没有找到页面配置')
+  }
+}
+
+// 初始化页面数据
+onMounted(() => {
+  loadConfig()
+})
 </script>
 
 <style lang="scss" scoped>
